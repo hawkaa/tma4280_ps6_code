@@ -37,7 +37,7 @@ Real
 	Real x, y;
 	for (j=0; j < m; j++) {
 		for (i=0; i < m; i++) {
-			x = (Real)(j+1) / (Real)(n);
+			x = (Real)(i+1) / (Real)(n);
 			y = (Real)(j+1) / (Real)(n);
 			b[j][i] = h * h * (*f)(x, y);
 		}
