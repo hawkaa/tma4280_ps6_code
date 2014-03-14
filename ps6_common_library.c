@@ -8,72 +8,76 @@
 /*local includes */
 #include "ps6_common_library.h"
 
-int
-poisson(int problem_size)
+Real
+**poisson(int problem_size)
 {
-  Real *diag, **b, **bt, *z;
-  Real pi, h, umax;
-  int i, j, n, m, nn;
+	Real *diag, **b, **bt, *z;
+	Real pi, h, umax;
+	int i, j, n, m, nn;
+	
+	/* the total number of grid points in each spatial direction is (n+1) */
+	/* the total number of degrees-of-freedom in each spatial direction is (n-1) */
+	/* this version requires n to be a power of 2 */
+	
+	n = problem_size;
+	m = n - 1;
+	nn = 4 * n;
+	
+	diag = createRealArray (m);
+	b = createReal2DArray (m,m);
+	bt = createReal2DArray (m,m);
+	z = createRealArray (nn);
+	
+	h = 1.0 / (Real)n;
+	pi = 4.0 * atan(1.0);
+	
+	for (i=0; i < m; i++) {
+		diag[i] = 2.0 * (1.0 - cos((i + 1) * pi / (Real)n));
+	}
+	for (j=0; j < m; j++) {
+		for (i=0; i < m; i++) {
+			b[j][i] = h*h;
+		}
+	}
+	for (j=0; j < m; j++) {
+		fst_(b[j], &n, z, &nn);
+	}
+	
+	transpose(bt, b, m);
+	
+	for (i=0; i < m; i++) {
+	  fstinv_(bt[i], &n, z, &nn);
+	}
+	
+	for (j=0; j < m; j++) {
+	  for (i=0; i < m; i++) {
+	    bt[j][i] = bt[j][i]/(diag[i]+diag[j]);
+	  }
+	}
+	
+	for (i=0; i < m; i++) {
+	  fst_(bt[i], &n, z, &nn);
+	}
+	
+	transpose (b,bt,m);
+	
+	for (j=0; j < m; j++) {
+	  fstinv_(b[j], &n, z, &nn);
+	}
+	
+	return b;
 
-  /* the total number of grid points in each spatial direction is (n+1) */
-  /* the total number of degrees-of-freedom in each spatial direction is (n-1) */
-  /* this version requires n to be a power of 2 */
+	umax = 0.0;
+	for (j=0; j < m; j++) {
+	  for (i=0; i < m; i++) {
+	    if (b[j][i] > umax) umax = b[j][i];
+	  }
+	}
 
-  n  = problem_size;
-  m  = n-1;
-  nn = 4*n;
 
-  diag = createRealArray (m);
-  b    = createReal2DArray (m,m);
-  bt   = createReal2DArray (m,m);
-  z    = createRealArray (nn);
-
-  h    = 1./(Real)n;
-  pi   = 4.*atan(1.);
-
-  for (i=0; i < m; i++) {
-    diag[i] = 2.*(1.-cos((i+1)*pi/(Real)n));
-  }
-  for (j=0; j < m; j++) {
-    for (i=0; i < m; i++) {
-      b[j][i] = h*h;
-    }
-  }
-  for (j=0; j < m; j++) {
-    fst_(b[j], &n, z, &nn);
-  }
-
-  transpose (bt,b,m);
-
-  for (i=0; i < m; i++) {
-    fstinv_(bt[i], &n, z, &nn);
-  }
-  
-  for (j=0; j < m; j++) {
-    for (i=0; i < m; i++) {
-      bt[j][i] = bt[j][i]/(diag[i]+diag[j]);
-    }
-  }
-  
-  for (i=0; i < m; i++) {
-    fst_(bt[i], &n, z, &nn);
-  }
-
-  transpose (b,bt,m);
-
-  for (j=0; j < m; j++) {
-    fstinv_(b[j], &n, z, &nn);
-  }
-
-  umax = 0.0;
-  for (j=0; j < m; j++) {
-    for (i=0; i < m; i++) {
-      if (b[j][i] > umax) umax = b[j][i];
-    }
-  }
-  printf (" umax = %e \n",umax);
-
-  return 0;
+	printf (" umax = %e \n",umax);
+	
+	return 0;
 }
 
 void transpose (Real **bt, Real **b, int m)

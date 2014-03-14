@@ -16,8 +16,8 @@ fstinv_(Real *v, int *n, Real *w, int *nn);
 
 /* functions defined in ps6_common_library.c */
 
-int
-poisson(int problem_size);
+Real
+**poisson(int problem_size);
 
 Real
 *createRealArray(int n);
