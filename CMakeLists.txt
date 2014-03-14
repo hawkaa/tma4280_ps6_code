@@ -32,22 +32,22 @@ endif()
 # Send the include directories to the compiler
 include_directories(${INCLUDES})
 
-# Add a library with common sources
+# Add libraries
 add_library(ps6_common_library ps6_common_library.c)
+add_library(fst fst.f)
 
 # The C based poisson application
 add_executable(poisson poisson.c)
 
 # The convergence test program
-add_executable(convergence convergence.c)
+#add_executable(convergence convergence.c)
 
 # The matrix transpose test program
-add_executable(matrix matrix.c)
+#add_executable(matrix matrix.c)
 
-# The Fortran based poisson application
-# add_executable(poisson-f poisson.f)
 
 # Link to libraries
+target_link_libraries(ps6_common_library fst)
 target_link_libraries(poisson ps6_common_library ${DEPLIBS_C})
 
 # We want to link this as a C program

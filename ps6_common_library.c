@@ -1,5 +1,9 @@
 /* global includes */
 #include <stdio.h>
+#include <stddef.h>
+#include <stdlib.h>
+#include <memory.h>
+#include <math.h>
 
 /*local includes */
 #include "ps6_common_library.h"

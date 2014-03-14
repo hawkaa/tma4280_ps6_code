@@ -10,7 +10,7 @@ int
 main(int argc, char** argv)
 {
 	int n;
-	if (argc < 2  {
+	if (argc < 2)  {
 		printf("need a problem size\n");
 		return 1;
 	}
