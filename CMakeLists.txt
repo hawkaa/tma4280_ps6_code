@@ -29,6 +29,9 @@ if(ENABLE_OPENMP)
   endif()
 endif()
 
+# Add gtest
+add_subdirectory(gtest)
+
 # Send the include directories to the compiler
 include_directories(${INCLUDES})
 
@@ -50,6 +53,8 @@ add_executable(matrix matrix.c)
 target_link_libraries(ps6_common_library fst)
 target_link_libraries(poisson ps6_common_library ${DEPLIBS_C})
 target_link_libraries(convergence ps6_common_library ${DEPLIBS_C})
+
+target_link_libraries(matrix ps6_common_library gtest gtest_main ${DEPLIBS_C})
 
 # We want to link this as a C program
 #set_target_properties(poisson PROPERTIES LINKER_LANGUAGE C)
