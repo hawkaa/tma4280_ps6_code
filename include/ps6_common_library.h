@@ -1,6 +1,8 @@
 #ifndef PS6_COMMON_LIBRARY_H_
 #define PS6_COMMON_LIBRARY_H_
-
+#ifdef __cplusplus
+extern "C" {
+#endif
 /*
  * Type definitios
  */
@@ -10,26 +12,28 @@ typedef Real (*function2D)(Real, Real);
 
 
 /* function prototypes for external fst library */
-void
+extern void
 fst_(Real *v, int *n, Real *w, int *nn);
 
-void
+extern void
 fstinv_(Real *v, int *n, Real *w, int *nn);
 
 /* functions defined in ps6_common_library.c */
 
-Real
+extern Real
 **poisson(int problem_size, function2D f);
 
 
-Real
+extern Real
 *createRealArray(int n);
 
-Real
+extern Real
 **createReal2DArray(int m, int n);
 
-void
+extern void
 transpose(Real **bt, Real **b, int m);
 
-
+#ifdef __cplusplus
+}
+#endif
 #endif

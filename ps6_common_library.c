@@ -104,7 +104,8 @@ get_umax_old(Real **solution, int problem_size)
 
 
 
-void transpose (Real **bt, Real **b, int m)
+void
+transpose(Real **bt, Real **b, int m)
 {
   int i, j;
   for (j=0; j < m; j++) {
