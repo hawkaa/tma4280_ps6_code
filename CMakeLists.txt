@@ -43,7 +43,7 @@ add_executable(poisson poisson.c)
 add_executable(convergence convergence.c)
 
 # The matrix transpose test program
-#add_executable(matrix matrix.c)
+add_executable(matrix matrix.c)
 
 
 # Link to libraries
