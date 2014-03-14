@@ -6,6 +6,8 @@
  */
 typedef double Real;
 
+typedef Real (*function2D)(Real, Real);
+
 
 /* function prototypes for external fst library */
 void
@@ -17,7 +19,8 @@ fstinv_(Real *v, int *n, Real *w, int *nn);
 /* functions defined in ps6_common_library.c */
 
 Real
-**poisson(int problem_size);
+**poisson(int problem_size, function2D f);
+
 
 Real
 *createRealArray(int n);
