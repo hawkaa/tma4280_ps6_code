@@ -1,8 +1,32 @@
 #ifndef PS6_COMMON_LIBRARY_H_
 #define PS6_COMMON_LIBRARY_H_
 
+/*
+ * Type definitios
+ */
+typedef double Real;
+
+
+/* function prototypes for external fst library */
 void
-print_from_common();
+fst_(Real *v, int *n, Real *w, int *nn);
+
+void
+fstinv_(Real *v, int *n, Real *w, int *nn);
+
+/* functions defined in ps6_common_library.c */
+
+int
+poisson(int problem_size);
+
+Real
+*createRealArray(int n);
+
+Real
+**createReal2DArray(int m, int n);
+
+void
+transpose(Real **bt, Real **b, int m);
 
 
 #endif

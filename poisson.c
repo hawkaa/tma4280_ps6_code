@@ -9,6 +9,12 @@
 int
 main(int argc, char** argv)
 {
-	printf("halla du\n");
-	print_from_common();
+	int n;
+	if (argc < 2  {
+		printf("need a problem size\n");
+		return 1;
+	}
+	n  = atoi(argv[1]);
+	return poisson(n);
+
 }
