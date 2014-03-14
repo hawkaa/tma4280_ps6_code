@@ -70,7 +70,6 @@ main(int argc, char** argv)
 	#else
 	rank = 0;
 	#endif
-	printf("MIN RANK: %i\n", rank);
 	if (rank == 0) {
 		ret_val = RUN_ALL_TESTS();
 	}
