@@ -16,3 +16,13 @@
 *.exe
 *.out
 *.app
+
+# Vim temp
+*.swp
+*.swo
+
+# Build directories
+Release/
+Debug/
+release/
+debug/
