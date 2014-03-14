@@ -8,6 +8,10 @@
 /*local includes */
 #include "ps6_common_library.h"
 
+/*
+ * Poisson solver.
+ * Should only be called from processor 0
+ */
 Real
 **poisson(int problem_size, function2D f)
 {
@@ -85,25 +89,10 @@ Real
 	return 0;
 }
 
-Real
-get_umax_old(Real **solution, int problem_size)
-{
-	int i, j;
-	Real umax;
-	umax = 0.0;
-	for (i = 0; i < problem_size - 1; ++i) {
-		for (j = 0; j < problem_size - 1; ++j) {
-			if (solution[i][j] > umax) {
-				umax = solution[i][j];
-			}
-		}
-	}
-	return umax;
-
-}
-
-
-
+/*
+ * Transpose function
+ * SHOULD ONLY BE CALLED FROM PROCESSOR 0
+ */
 void
 transpose(Real **bt, Real **b, int m)
 {

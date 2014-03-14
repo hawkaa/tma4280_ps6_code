@@ -2,6 +2,9 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
+#ifdef HAVE_MPI
+#include <mpi.h>
+#endif
 
 /* local includes */
 #include "ps6_common_library.h"
@@ -50,50 +53,32 @@ get_umax(Real **b, int problem_size, function2D reference)
 int
 main(int argc, char** argv)
 {
-	int i, j;
-	Real **b;
-	Real umax;
-
-	b = createReal2DArray(pow(2, N_MAX) - 1, pow(2, N_MAX) - 1);
+	int rank;
+	#ifdef HAVE_MPI
+	MPI_Init(&argc, &argv);
+	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+	#else
+	rank = 0;
+	#endif
+	if (rank == 0) {
+		int i, j;
+		Real **b;
+		Real umax;
 	
-	printf("# Problem Size\tAbsolute error\n");
-
-	for (i = N_MIN; i <= N_MAX; ++i) {
-		j = pow(2, i);
-		b = poisson(j, *f);
-		umax = get_umax(b, j, *u);
-		printf("%i\t%.16e\n", j, umax);
-	}
+		b = createReal2DArray(pow(2, N_MAX) - 1, pow(2, N_MAX) - 1);
 	
-	/*
-
-	solution = poisson(n, *f);
+		printf("# Problem Size\tAbsolute error\n");
 	
-
-
-	for (i = 0; i < n - 1; ++i) {
-		for (j = 0; j < n - 1; ++j) {
-			//printf("%f\t", solution[i][j]);
+		for (i = N_MIN; i <= N_MAX; ++i) {
+			j = pow(2, i);
+			b = poisson(j, *f);
+			umax = get_umax(b, j, *u);
+			printf("%i\t%.16e\n", j, umax);
 		}
-		//printf("\n");
 	}
-	//printf("\n");
-	Real x, y;
-	Real umax, res;
-	umax = 0.0;
-	for (i = 1; i < n; ++i) {
-		for (j = 1; j < n; ++j) {
-			x = (Real)j / (Real)(n);
-			y = (Real)i / (Real)(n);
-			res = fabs(solution[i-1][j-1] - u(x, y));
-			if ( res > umax) {
-				umax = res;
-			}
-			//printf("%f\t", u(x, y));
-		}
-		//printf("\n");
-	}
-	printf("\nUMAX: %f\n", umax);
-	*/
-
+	#ifdef HAVE_MPI
+	MPI_Finalize();
+	#endif
+	
+	exit(0);
 }

@@ -27,7 +27,17 @@ TEST(TransposeSingleProc, HardCoded)
 
 TEST(TransposeSingleProc, Looped)
 {
+	/* MPI vars */
+	int rank;
+	#ifdef HAVE_MPI
+	/* TODO: Get rank */
+	#else
+	rank = 0;
+	#endif
+
+	
 	int matrix_size;
+
 	int counter, i, j;
 	matrix_size = 100;
 	Real **b, **bt;
