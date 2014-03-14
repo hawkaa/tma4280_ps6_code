@@ -1,11 +1,14 @@
 /* global includes */
 #include <stdio.h>
-
+#ifdef HAVE_MPI
+#include <mpi.h>
+#endif
 /* local includes */
 extern "C" {
 #include "ps6_common_library.h"
 }
 #include "gtest/gtest.h"
+
 
 TEST(TransposeSingleProc, HardCoded)
 {
@@ -27,14 +30,6 @@ TEST(TransposeSingleProc, HardCoded)
 
 TEST(TransposeSingleProc, Looped)
 {
-	/* MPI vars */
-	int rank;
-	#ifdef HAVE_MPI
-	/* TODO: Get rank */
-	#else
-	rank = 0;
-	#endif
-
 	
 	int matrix_size;
 
@@ -66,6 +61,21 @@ TEST(TransposeSingleProc, Looped)
 int
 main(int argc, char** argv)
 {
+	int ret_val, rank;
+	MPI::Init();
 	::testing::InitGoogleTest(&argc, argv);
-	return RUN_ALL_TESTS();
+
+	#ifdef HAVE_MPI
+	rank = MPI::COMM_WORLD.Get_rank();	
+	#else
+	rank = 0;
+	#endif
+	printf("MIN RANK: %i\n", rank);
+	if (rank == 0) {
+		ret_val = RUN_ALL_TESTS();
+	}
+
+
+	MPI::Finalize();
+	return ret_val;
 }

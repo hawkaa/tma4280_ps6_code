@@ -4,6 +4,7 @@ cmake_minimum_required(VERSION 2.6)
 
 # We use the C language
 enable_language(C)
+enable_language(CXX)
 enable_language(Fortran)
 
 # CMake Options to enable/disable MPI and OpenMP
@@ -18,6 +19,7 @@ if(MPI_FOUND)
   add_definitions(-DHAVE_MPI=1)
   set(INCLUDES ${INCLUDES} ${MPI_INCLUDE_PATH})
   set(DEPLIBS_C ${DEPLIBS_C} ${MPI_C_LIBRARIES})
+  set(DEPLIBS_CXX ${DEPLIBS_CXX} ${MPI_CXX_LIBRARIES})
   set(DEPLIBS_F ${DEPLIBS_F} ${MPI_Fortran_LIBRARIES})
 endif()
 
@@ -50,16 +52,8 @@ add_executable(transposetest transposetest.cpp)
 
 
 # Link to libraries
-target_link_libraries(ps6_common_library fst)
+target_link_libraries(ps6_common_library fst ${DEPLIBS_C})
 target_link_libraries(poisson ps6_common_library ${DEPLIBS_C})
 target_link_libraries(convergence ps6_common_library ${DEPLIBS_C})
 
-target_link_libraries(transposetest ps6_common_library ${DEPLIBS_C} gtest gtest_main pthread)
-
-#target_link_libraries(matrix ps6_common_library gtest gtest_main ${DEPLIBS_C})
-
-# We want to link this as a C program
-set_target_properties(transposetest PROPERTIES LINKER_LANGUAGE C)
-
-# Link to libraries
-# target_link_libraries(poisson-f common ${DEPLIBS_F})
+target_link_libraries(transposetest ps6_common_library ${DEPLIBS_CXX} gtest gtest_main pthread)
