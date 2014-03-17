@@ -39,7 +39,8 @@ main(int argc, char** argv)
 	
 	/* test sizes */
 	int test_num_ranks;
-	int test_rank = 1;	
+	int test_rank = 2;
+	printf("rank: %d\n", test_rank);	
 
 	//Real **solution;
 	if (argc < 3)  {
@@ -50,10 +51,13 @@ main(int argc, char** argv)
 	/* test sizes */	
 	test_num_ranks = atoi(argv[2]);
 	int* sizes = create_SIZES(n, test_num_ranks);
+	printf("SIZES: ");
 	printArr(sizes, test_num_ranks);
 	int* s_count = create_Scount(test_rank, test_num_ranks, sizes);
+	printf("S_count: ");
 	printArr(s_count, test_num_ranks);
 	int* s_displ = create_Sdispl(test_rank, test_num_ranks, sizes);
+	printf("S_displ: ");
 	printArr(s_displ, test_num_ranks);
 	free(sizes);
 	free(s_count);
