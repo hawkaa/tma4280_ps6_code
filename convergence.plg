@@ -1,0 +1,6 @@
+# Convergence test for Problem Set 6 poisson solver
+set logscale xy
+set xlabel "Problem size"
+set ylabel "Absolute error"
+plot filename smooth unique, 1 / x**2
+pause -1
