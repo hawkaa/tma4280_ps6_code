@@ -128,6 +128,7 @@ Real
 	return (a);
 }
 
+/*  */
 int
 *create_SIZES(int num_rows, int num_ranks)
 {
@@ -144,10 +145,10 @@ int
 			/* if we do not have any rows left, give zero to the rest */
 			sizes_arr[i] = 0;
 		} else if(num_p_proc_r == 0){
-			/* if no more rest rows, give the right number of rows to process i */
+			/* if no more rows remains, give the right number of rows to process i */
 			sizes_arr[i] = num_p_proc;
 		} else{
-			/* if we have rest rows, give these to the last nodes */
+			/* if we have remaining rows, give these to the last nodes */
 			sizes_arr[i] = num_p_proc + 1;
 			num_p_proc_r--; 
 		}
