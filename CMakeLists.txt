@@ -50,6 +50,16 @@ add_executable(convergence convergence.c)
 # The matrix transpose test program
 add_executable(transposetest transposetest.cpp)
 
+# Create the plot file
+add_custom_command(OUTPUT convergence_plot_data.tmp
+		COMMAND ./convergence > convergence_plot_data.tmp
+		DEPENDS convergence
+		COMMENT "Needed to create plot data")
+
+add_custom_target(convergence-plot
+		COMMAND gnuplot -e \"filename='convergence_plot_data.tmp'\" ${CMAKE_SOURCE_DIR}/convergence.plg
+		DEPENDS convergence_plot_data.tmp
+		)
 
 # Link to libraries
 target_link_libraries(ps6_common_library fst ${DEPLIBS_C})

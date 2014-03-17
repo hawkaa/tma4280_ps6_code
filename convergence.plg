@@ -3,3 +3,4 @@ set logscale xy
 set xlabel "Problem size"
 set ylabel "Absolute error"
 plot filename
+pause -1

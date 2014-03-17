@@ -67,6 +67,7 @@ main(int argc, char** argv)
 	
 		b = createReal2DArray(pow(2, N_MAX) - 1, pow(2, N_MAX) - 1);
 	
+		printf("# Convergence test for Problem Set 6 poisson solver\n");
 		printf("# Problem Size\tAbsolute error\n");
 	
 		for (i = N_MIN; i <= N_MAX; ++i) {
