@@ -57,6 +57,39 @@ TEST(TransposeSingleProc, Looped)
 
 }
 
+TEST(create_SIZES, Even)
+{
+	int *s = create_SIZES(8, 4);
+	ASSERT_EQ(2, s[0]);
+	ASSERT_EQ(2, s[1]);
+	ASSERT_EQ(2, s[2]);
+	ASSERT_EQ(2, s[3]);
+}
+
+TEST(create_SIZES, LessRowsThanProc)
+{
+	int *s = create_SIZES(3,5);
+	ASSERT_EQ(0, s[0]);
+	ASSERT_EQ(0, s[1]);
+	ASSERT_EQ(1, s[2]);
+	ASSERT_EQ(1, s[3]);
+	ASSERT_EQ(1, s[4]);
+}
+
+TEST(create_SIZES, OneProc)
+{
+	int *s = create_SIZES(4,1);
+	ASSERT_EQ(4, s[0]);
+}
+
+TEST(create_SIZES, UnEven)
+{
+	int *s = create_SIZES(7, 4);
+	ASSERT_EQ(1, s[0]);
+	ASSERT_EQ(2, s[1]);
+	ASSERT_EQ(2, s[2]);
+	ASSERT_EQ(2, s[3]);
+}
 
 int
 main(int argc, char** argv)
