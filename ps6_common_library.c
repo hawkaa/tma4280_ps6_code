@@ -76,17 +76,6 @@ Real
 	
 	return b;
 
-	umax = 0.0;
-	for (j=0; j < m; j++) {
-	  for (i=0; i < m; i++) {
-	    if (b[j][i] > umax) umax = b[j][i];
-	  }
-	}
-
-
-	printf (" umax = %e \n",umax);
-	
-	return 0;
 }
 
 /*
@@ -96,6 +85,13 @@ Real
 void
 transpose(Real **bt, Real **b, int m)
 {
+	/* spre ut matrise på alle prosesser */
+		
+
+	/* kall til funksjon som antar at matrisen allerede er spredt */
+
+
+	/* samle sammen på p0 og returner */
   int i, j;
   for (j=0; j < m; j++) {
     for (i=0; i < m; i++) {
@@ -128,4 +124,34 @@ Real
 	n = n1*n2;
 	memset(a[0],0,n*sizeof(Real));
 	return (a);
+}
+
+int
+*create_SIZES(int num_rows, int num_ranks)
+{
+	int* sizes_arr = (int*)malloc(sizeof(int)*num_ranks);
+	int i;
+	/* find number of rows per process */
+	int num_p_proc = num_rows/num_ranks;
+	/* possible rest rows */
+	int num_p_proc_r = num_rows%num_ranks;	
+	/* node 0 gets less work */
+	sizes_arr[0] = num_p_proc;
+	for(i = 1; i< num_ranks; i++){
+		if(num_rows <= 0){
+			/* if we do not have any rows left, give zero to the rest */
+			sizes_arr[i] = 0;
+		} else if(num_p_proc_r == 0){
+			/* if no more rest rows, give the right number of rows to process i */
+			sizes_arr[i] = num_p_proc;
+		} else{
+			/* if we have rest rows, give these to the last nodes */
+			sizes_arr[i] = num_p_proc + 1;
+			num_p_proc_r--; 
+		}
+		num_rows--;	
+	}
+	/* return sizes array */	
+	return sizes_arr;
+		
 }

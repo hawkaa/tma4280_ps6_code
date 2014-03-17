@@ -33,6 +33,9 @@ extern Real
 extern void
 transpose(Real **bt, Real **b, int m);
 
+extern int* 
+create_SIZES(int num_rows, int num_ranks);
+
 #ifdef __cplusplus
 }
 #endif

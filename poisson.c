@@ -22,16 +22,29 @@ u(Real x, Real y)
 	return sin(pi * x) * sin(2.0 * pi * y);
 }
 
+void
+printArr(int* arr, int size)
+{
+	int i;
+	for(i = 0; i < size; i++){
+		printf("%d   ", arr[i]);
+	}
+	printf("\n");
+}
+
 int
 main(int argc, char** argv)
 {
 	int n, i, j;
+
 	Real **solution;
 	if (argc < 2)  {
 		printf("need a problem size\n");
 		return 1;
 	}
-	n  = atoi(argv[1]);
+	n  = atoi(argv[1]);	
+
+	
 	solution = poisson(n, *f);
 	//printf("Umax: %f\n", get_umax(solution, n));
 	for (i = 0; i < n - 1; ++i) {
@@ -58,6 +71,7 @@ main(int argc, char** argv)
 		printf("\n");
 	}
 	printf("\nUMAX: %f\n", umax);
+	
 
 
 }
