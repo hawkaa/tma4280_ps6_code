@@ -139,7 +139,7 @@ int
 	int num_p_proc_r = num_rows%num_ranks;	
 	/* node 0 gets less work */
 	sizes_arr[0] = num_p_proc;
-	for(i = 1; i< num_ranks; i++){
+	for(i = num_ranks-1; i> 0; i--){
 		if(num_rows <= 0){
 			/* if we do not have any rows left, give zero to the rest */
 			sizes_arr[i] = 0;
@@ -156,4 +156,29 @@ int
 	/* return sizes array */	
 	return sizes_arr;
 		
+}
+
+/* called by each process to know the number of elements to send to other processes */
+int
+*create_Scount(int current_rank, int num_ranks, int* sizes)
+{
+	int i;
+	int* s_count = (int*)malloc(sizeof(int)*num_ranks);
+	for(i = 0; i < num_ranks; i++){
+		s_count[i] = sizes[current_rank]*sizes[i];	
+	}
+	return s_count;
+}
+
+/* called by each process to know the displacement in the send buffer to each process */
+int 
+*create_Sdispl(int current_rank, int num_ranks, int* sizes)
+{
+	int i;
+	int* s_displ = (int*)malloc(sizeof(int)*num_ranks);
+	s_displ[0] = 0;
+	for(i = 1; i < num_ranks; i++){
+		s_displ[i] += s_displ[i-1] + (sizes[current_rank]*sizes[i-1]);	
+	}
+	return s_displ;
 }

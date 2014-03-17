@@ -36,6 +36,12 @@ transpose(Real **bt, Real **b, int m);
 extern int* 
 create_SIZES(int num_rows, int num_ranks);
 
+extern int*
+create_Scount(int current_rank, int num_ranks, int* sizes);
+
+extern int*
+create_Sdispl(int current_rank, int num_ranks, int* sizes);
+
 #ifdef __cplusplus
 }
 #endif

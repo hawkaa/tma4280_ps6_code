@@ -36,15 +36,30 @@ int
 main(int argc, char** argv)
 {
 	int n, i, j;
+	
+	/* test sizes */
+	int test_num_ranks;
+	int test_rank = 1;	
 
-	Real **solution;
-	if (argc < 2)  {
+	//Real **solution;
+	if (argc < 3)  {
 		printf("need a problem size\n");
 		return 1;
 	}
-	n  = atoi(argv[1]);	
+	n  = atoi(argv[1]);
+	/* test sizes */	
+	test_num_ranks = atoi(argv[2]);
+	int* sizes = create_SIZES(n, test_num_ranks);
+	printArr(sizes, test_num_ranks);
+	int* s_count = create_Scount(test_rank, test_num_ranks, sizes);
+	printArr(s_count, test_num_ranks);
+	int* s_displ = create_Sdispl(test_rank, test_num_ranks, sizes);
+	printArr(s_displ, test_num_ranks);
+	free(sizes);
+	free(s_count);
+	free(s_displ);
 
-	
+	/*
 	solution = poisson(n, *f);
 	//printf("Umax: %f\n", get_umax(solution, n));
 	for (i = 0; i < n - 1; ++i) {
@@ -71,7 +86,7 @@ main(int argc, char** argv)
 		printf("\n");
 	}
 	printf("\nUMAX: %f\n", umax);
-	
+	*/
 
 
 }
