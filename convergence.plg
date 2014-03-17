@@ -1,0 +1,5 @@
+# Convergence test for Problem Set 6 poisson solver
+set logscale xy
+set xlabel "Problem size"
+set ylabel "Absolute error"
+plot filename
