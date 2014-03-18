@@ -42,8 +42,14 @@ create_Scount(int current_rank, int num_ranks, int* sizes);
 extern int*
 create_Sdispl(int current_rank, int num_ranks, int* sizes);
 
+extern Real*
+create_Send_buf(Real** owned_rows, int current_rank, int num_ranks, int* sizes, int m, int* s_displ, int* s_count);
+
 extern Real**
 get_matrix_rows(Real** b, int m, int current_rank,  int *sizes);
+
+extern int
+belongs_to_rank(int i, int *sizes, int sizes_length); 
 
 extern int
 get_offset(int current_rank, int *sizes);

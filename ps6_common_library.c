@@ -81,6 +81,30 @@ Real
 
 }
 
+static void
+print2dArray(Real** arr, int rows, int cols)
+{
+	int i, j;
+	for(i = 0; i <rows; i++){
+		for(j = 0; j < cols; j++){
+			printf("%f   ", arr[i][j]);
+		}
+		printf("\n");
+	}
+}
+
+static void
+printArr(Real* arr, int size)
+{
+	int i;
+	for(i = 0; i < size; i++){
+		printf("%f   ", arr[i]);
+	}
+	printf("\n");
+}
+
+
+
 /*
  * Transpose function
  * SHOULD ONLY BE CALLED FROM PROCESSOR 0
@@ -99,18 +123,22 @@ transpose(Real **bt, Real **b, int m)
 		int i;
 		for(i = 1; i < size; i++){
 			b_partial = get_matrix_rows(b, m, i, sizes);
-			MPI_Send(b_partial, m*sizes[rank], MPI_DOUBLE, i , 100, MPI_COMM_WORLD);
+			MPI_Send(&(b_partial[0][0]), m*sizes[i], MPI_DOUBLE, i , 100, MPI_COMM_WORLD);
 		}
 		b_partial = get_matrix_rows(b, m , 0, sizes);
 	} else{
-		MPI_Recv(b_partial, m, MPI_DOUBLE, 0, 100, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-	}
+		MPI_Recv(&(b_partial[0][0]), m*sizes[rank], MPI_DOUBLE, 0, 100, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+	}	
 
 	/* kall til funksjon som antar at matrisen allerede er spredt */
+//	Real* send_buf = create_Send_buf(b_partial, sizes[rank], size, sizes, m);
+	
+	//if(rank == 1) printArr(send_buf, m*sizes[rank]);	
 
-	#else
 	/* samle sammen på p0 og returner */
-  	int i, j;
+  	
+	#else
+	int i, j;
   	for (j=0; j < m; j++) {
     		for (i=0; i < m; i++) {
       			bt[j][i] = b[i][j];
@@ -199,6 +227,55 @@ int
 		s_displ[i] = s_displ[i-1] + (sizes[current_rank]*sizes[i-1]);	
 	}
 	return s_displ;
+}
+
+int
+belongs_to_rank(int i, int *sizes, int sizes_length)
+{
+	int j;
+	int sizes_dup[sizes_length];
+	for (j = 0; j < sizes_length; ++j) {
+		sizes_dup[j] = sizes[j];
+	}
+	
+	int rank;
+	rank = 0;
+	for(j = 0; j < i; ++j) {
+		--sizes_dup[rank];
+		if (sizes_dup[rank] == 0)
+			++rank;
+	}
+	return rank;
+
+}
+
+Real*
+create_Send_buf(Real** owned_rows, int current_rank, int num_ranks, int* sizes, int m, int* s_displ, int* s_count)
+{
+	int i, j;
+	int index = 0;
+	int num_rows = sizes[current_rank];
+	int send_buffer_size = m*num_rows;
+	int base;
+	int rank;
+	Real* send_buf = createRealArray(send_buffer_size);
+	
+	int pos[num_ranks];
+	for(i = 0; i < num_ranks; ++i)
+		pos[i] = 0;
+	
+	for(i = 0; i < num_rows; i++){
+		for(j = 0; j < m; j++) {
+			/* get rank for current matric element */
+			rank = belongs_to_rank(j, sizes, num_ranks);
+			base = s_displ[rank] + (pos[rank]++);
+			printf("Base: %i\n", base);
+			printf("Val: %f\n", owned_rows[i][j]);
+			//send_buf[base] = 0.0;
+			send_buf[base] = owned_rows[i][j];
+		}		
+	}
+	return send_buf;	
 }
 
 int

@@ -37,6 +37,9 @@ int
 main(int argc, char** argv)
 {
 	int n, i, j, rank, size, tag;	
+		
+	/* Test */
+	int counter;
 
 	//Real **solution;
 	if (argc < 2)  {
@@ -48,9 +51,22 @@ main(int argc, char** argv)
 	
 	#ifdef HAVE_MPI
 	MPI_Init(&argc, &argv);
-	#endif
+	Real** b;
+	Real** bt;
 	
+	b = createReal2DArray(n, n);
+	
+	counter = 1;
+	for (i = 0; i < n; ++i) {
+		for  (j = 0; j < n; ++j) {
+			b[i][j] = counter++;
+		}
+	}
 
+	
+	transpose(bt, b, n);
+
+	#endif	
 	
 	/*int* sizes = create_SIZES(n, size);
 	printf("SIZES: ");
@@ -67,6 +83,7 @@ main(int argc, char** argv)
 	free(sizes);
 	free(s_count);
 	free(s_displ);*/
+	
 	#ifdef HAVE_MPI
 	MPI_Finalize();
 	#endif
