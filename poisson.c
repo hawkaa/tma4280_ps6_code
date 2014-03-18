@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
+#include "mpi.h"
 
 /* local includes */
 #include "ps6_common_library.h"
@@ -35,33 +36,40 @@ printArr(int* arr, int size)
 int
 main(int argc, char** argv)
 {
-	int n, i, j;
-	
-	/* test sizes */
-	int test_num_ranks;
-	int test_rank = 2;
-	printf("rank: %d\n", test_rank);	
+	int n, i, j, rank, size, tag;	
 
 	//Real **solution;
-	if (argc < 3)  {
+	if (argc < 2)  {
 		printf("need a problem size\n");
 		return 1;
 	}
+
 	n  = atoi(argv[1]);
-	/* test sizes */	
-	test_num_ranks = atoi(argv[2]);
-	int* sizes = create_SIZES(n, test_num_ranks);
+	
+	#ifdef HAVE_MPI
+	MPI_Init(&argc, &argv);
+	#endif
+	
+
+	
+	/*int* sizes = create_SIZES(n, size);
 	printf("SIZES: ");
-	printArr(sizes, test_num_ranks);
-	int* s_count = create_Scount(test_rank, test_num_ranks, sizes);
+	printArr(sizes, size);
+
+	int* s_count = create_Scount(rank, size, sizes);
 	printf("S_count: ");
-	printArr(s_count, test_num_ranks);
-	int* s_displ = create_Sdispl(test_rank, test_num_ranks, sizes);
+	printArr(s_count, size);
+
+	int* s_displ = create_Sdispl(rank, size, sizes);
 	printf("S_displ: ");
-	printArr(s_displ, test_num_ranks);
+	printArr(s_displ, size);
+	
 	free(sizes);
 	free(s_count);
-	free(s_displ);
+	free(s_displ);*/
+	#ifdef HAVE_MPI
+	MPI_Finalize();
+	#endif
 
 	/*
 	solution = poisson(n, *f);
@@ -92,5 +100,6 @@ main(int argc, char** argv)
 	printf("\nUMAX: %f\n", umax);
 	*/
 
+	return 0;
 
 }
