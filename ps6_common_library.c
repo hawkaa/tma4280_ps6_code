@@ -179,7 +179,7 @@ int
 	int* s_displ = (int*)malloc(sizeof(int)*num_ranks);
 	s_displ[0] = 0;
 	for(i = 1; i < num_ranks; i++){
-		s_displ[i] += s_displ[i-1] + (sizes[current_rank]*sizes[i-1]);	
+		s_displ[i] = s_displ[i-1] + (sizes[current_rank]*sizes[i-1]);	
 	}
 	return s_displ;
 }
