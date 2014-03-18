@@ -153,6 +153,46 @@ TEST(create_Sdispl, 7x7_3p)
 	ASSERT_EQ(12, sD2[2]);
 }
 
+TEST(get_matrix_rows, 3x3)
+{
+	Real **b = createReal2DArray(3, 3);
+	b[0][0] = 1;	b[0][1] = 2;	b[0][2] = 3;
+	b[1][0] = 4;	b[1][1] = 5;	b[1][2] = 6;
+	b[2][0] = 7;	b[2][1] = 8;	b[2][2] = 9;
+	
+	int s[2] = {1, 2};
+
+	Real **b0 = get_matrix_rows(b, 3, 0, s);
+	ASSERT_FLOAT_EQ(1, b0[0][0]);
+	ASSERT_FLOAT_EQ(2, b0[0][1]);
+	ASSERT_FLOAT_EQ(3, b0[0][2]);
+
+	Real **b1 = get_matrix_rows(b, 3, 1, s);
+	ASSERT_FLOAT_EQ(4, b1[0][0]);
+	ASSERT_FLOAT_EQ(5, b1[0][1]);
+	ASSERT_FLOAT_EQ(6, b1[0][2]);
+	ASSERT_FLOAT_EQ(7, b1[1][0]);
+	ASSERT_FLOAT_EQ(8, b1[1][1]);
+	ASSERT_FLOAT_EQ(9, b1[1][2]);
+
+
+}
+
+TEST(get_offset, p2)
+{
+	int s[2] = {1, 2};
+	ASSERT_EQ(0, get_offset(0, s));
+	ASSERT_EQ(1, get_offset(1, s));
+}
+
+TEST(get_offset, p3)
+{
+	int s[3] = {3, 4, 4};
+	ASSERT_EQ(0, get_offset(0, s));
+	ASSERT_EQ(3, get_offset(1, s));
+	ASSERT_EQ(7, get_offset(2, s));
+}
+
 int
 main(int argc, char** argv)
 {

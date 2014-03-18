@@ -184,8 +184,28 @@ int
 	return s_displ;
 }
 
+int
+get_offset(int current_rank, int *sizes)
+{
+	int offset, i;
+	offset = 0;
+	for (i = 0; i < current_rank; ++i) {
+		offset += sizes[i];
+	}
+	return offset;
+}
+
 Real**
 get_matrix_rows(Real** b, int m, int current_rank, int *sizes)
 {
-	return NULL;
+	Real** b_return;
+	int offset, i, j;
+	
+	b_return = createReal2DArray(sizes[current_rank], m);
+	offset = get_offset(current_rank, sizes);
+	for (i = 0; i < sizes[current_rank]; ++i) {
+		memcpy(b_return[i], b[i+offset], sizeof(Real) * m);
+	}
+
+	return b_return;
 }
