@@ -45,6 +45,9 @@ create_Sdispl(int current_rank, int num_ranks, int* sizes);
 extern Real**
 get_matrix_rows(Real** b, int m, int current_rank,  int *sizes);
 
+extern int
+get_offset(int current_rank, int *sizes);
+
 #ifdef __cplusplus
 }
 #endif
