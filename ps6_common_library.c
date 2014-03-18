@@ -88,7 +88,7 @@ void
 transpose(Real **bt, Real **b, int m)
 {
 	/* spre ut matrise på alle prosesser */
-		
+	
 
 	/* kall til funksjon som antar at matrisen allerede er spredt */
 
@@ -182,4 +182,10 @@ int
 		s_displ[i] = s_displ[i-1] + (sizes[current_rank]*sizes[i-1]);	
 	}
 	return s_displ;
+}
+
+Real**
+get_matrix_rows(Real** b, int m, int current_rank, int *sizes)
+{
+	return NULL;
 }
