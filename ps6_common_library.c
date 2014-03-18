@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <memory.h>
 #include <math.h>
+#include "mpi.h"
 
 /*local includes */
 #include "ps6_common_library.h"
@@ -87,19 +88,35 @@ Real
 void
 transpose(Real **bt, Real **b, int m)
 {
+	#ifdef HAVE_MPI
 	/* spre ut matrise på alle prosesser */
-	
+	int rank, size;
+	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+	MPI_Comm_size(MPI_COMM_WORLD, &size);
+	int* sizes = create_SIZES(m, size);
+	Real** b_partial = createReal2DArray(sizes[rank], m);
+	if(rank == 0){	
+		int i;
+		for(i = 1; i < size; i++){
+			b_partial = get_matrix_rows(b, m, i, sizes);
+			MPI_Send(b_partial, m*sizes[rank], MPI_DOUBLE, i , 100, MPI_COMM_WORLD);
+		}
+		b_partial = get_matrix_rows(b, m , 0, sizes);
+	} else{
+		MPI_Recv(b_partial, m, MPI_DOUBLE, 0, 100, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+	}
 
 	/* kall til funksjon som antar at matrisen allerede er spredt */
 
-
+	#else
 	/* samle sammen på p0 og returner */
-  int i, j;
-  for (j=0; j < m; j++) {
-    for (i=0; i < m; i++) {
-      bt[j][i] = b[i][j];
-    }
-  }
+  	int i, j;
+  	for (j=0; j < m; j++) {
+    		for (i=0; i < m; i++) {
+      			bt[j][i] = b[i][j];
+    		}
+  	}
+	#endif
 }
 
 Real *createRealArray (int n)
