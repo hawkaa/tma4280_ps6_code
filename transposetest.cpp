@@ -11,6 +11,18 @@ extern "C" {
 
 static int rank;
 
+TEST(belongs_to_rank, test1)
+{
+	int s[3] = {2,2,3};
+	ASSERT_EQ(0, belongs_to_rank(0, s, 3));
+	ASSERT_EQ(0, belongs_to_rank(1, s, 3));
+	ASSERT_EQ(1, belongs_to_rank(2, s, 3));
+	ASSERT_EQ(1, belongs_to_rank(3, s, 3));
+	ASSERT_EQ(2, belongs_to_rank(4, s, 3));
+	ASSERT_EQ(2, belongs_to_rank(5, s, 3));
+	ASSERT_EQ(2, belongs_to_rank(6, s, 3));
+}	
+
 TEST(TransposeSingleProc, HardCoded)
 {
 	Real **b, **bt;
@@ -26,6 +38,46 @@ TEST(TransposeSingleProc, HardCoded)
 	ASSERT_FLOAT_EQ(bt[0][1], 3.0);
 	ASSERT_FLOAT_EQ(bt[1][0], 2.0);
 	ASSERT_FLOAT_EQ(bt[1][1], 4.0);
+}
+
+TEST(create_Send_buf, test1)
+{
+	int i, j;
+	Real **b;
+	Real *send_buf;
+	b = createReal2DArray(2, 7);
+	int value = 1;
+	for(i = 0; i < 2; i++){
+		for(j = 0; j < 7; j++){
+			b[i][j] = value;
+			value++;	
+		}
+	}
+	ASSERT_FLOAT_EQ(3.0, b[0][2]);
+	ASSERT_FLOAT_EQ(8.0, b[1][0]);
+	int s[3] = {2,2,3};
+	
+	int *sC = create_Scount(0, 3, s);
+	int *sD = create_Sdispl(0, 3, s);
+	
+	send_buf = create_Send_buf(b, 0, 3, s, 7, sD, sC);
+	ASSERT_FLOAT_EQ(1, send_buf[0]);
+	ASSERT_FLOAT_EQ(2, send_buf[1]);
+	ASSERT_FLOAT_EQ(8, send_buf[2]);
+	ASSERT_FLOAT_EQ(9, send_buf[3]);
+	ASSERT_FLOAT_EQ(3, send_buf[4]);
+	ASSERT_FLOAT_EQ(4, send_buf[5]);
+	ASSERT_FLOAT_EQ(10, send_buf[6]);
+	ASSERT_FLOAT_EQ(11, send_buf[7]);
+	ASSERT_FLOAT_EQ(5, send_buf[8]);
+	ASSERT_FLOAT_EQ(6, send_buf[9]);
+	ASSERT_FLOAT_EQ(7, send_buf[10]);
+	ASSERT_FLOAT_EQ(12, send_buf[11]);
+	ASSERT_FLOAT_EQ(13, send_buf[12]);
+	ASSERT_FLOAT_EQ(14, send_buf[13]);
+
+	
+	
 }
 
 TEST(TransposeSingleProc, Looped)
