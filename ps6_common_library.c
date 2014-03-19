@@ -131,9 +131,17 @@ transpose(Real **bt, Real **b, int m)
 	}	
 
 	/* kall til funksjon som antar at matrisen allerede er spredt */
-//	Real* send_buf = create_Send_buf(b_partial, sizes[rank], size, sizes, m);
+	int* s_count = create_Scount(rank, size, sizes);
+	int* s_displ = create_Sdispl(rank, size, sizes);
+
+	Real* send_buf = create_Send_buf(b_partial, rank, size, sizes, m, s_displ, s_count);
+	Real* recv_buf = (Real*)malloc(sizeof(Real)*m*sizes[rank]);
+
+	MPI_Alltoallv(send_buf, s_count, s_displ, MPI_DOUBLE, recv_buf, s_count, s_displ, MPI_DOUBLE, MPI_COMM_WORLD);
 	
-	//if(rank == 1) printArr(send_buf, m*sizes[rank]);	
+	Real** partial_trans = create_partial_transposed(recv_buf, m, rank, sizes);
+
+	if(rank == 0) print2dArray(partial_trans, sizes[rank], m);		
 
 	/* samle sammen på p0 og returner */
   	
@@ -269,13 +277,25 @@ create_Send_buf(Real** owned_rows, int current_rank, int num_ranks, int* sizes, 
 			/* get rank for current matric element */
 			rank = belongs_to_rank(j, sizes, num_ranks);
 			base = s_displ[rank] + (pos[rank]++);
-			printf("Base: %i\n", base);
-			printf("Val: %f\n", owned_rows[i][j]);
-			//send_buf[base] = 0.0;
 			send_buf[base] = owned_rows[i][j];
 		}		
 	}
 	return send_buf;	
+}
+
+Real**
+create_partial_transposed(Real* recv_buf, int m, int current_rank, int* sizes)
+{
+	int i, row, col;
+	int current_row_num = sizes[current_rank];
+	int recv_buf_length = m*current_row_num;
+	Real** bt_partial = createReal2DArray(current_row_num, m);
+	for(i = 0; i < recv_buf_length; i++){
+		row = i % current_row_num;
+		col = i / current_row_num;
+		bt_partial[row][col] = recv_buf[i];
+	}
+	return bt_partial;
 }
 
 int

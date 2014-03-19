@@ -46,6 +46,9 @@ extern Real*
 create_Send_buf(Real** owned_rows, int current_rank, int num_ranks, int* sizes, int m, int* s_displ, int* s_count);
 
 extern Real**
+create_partial_transposed(Real* recv_buf, int m, int current_rank, int* sizes);
+
+extern Real**
 get_matrix_rows(Real** b, int m, int current_rank,  int *sizes);
 
 extern int
