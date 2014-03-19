@@ -47,8 +47,20 @@ add_executable(poisson poisson.c)
 # The convergence test program
 add_executable(convergence convergence.c)
 
-# The matrix transpose test program
-add_executable(transposetest transposetest.cpp)
+# Unit testing
+add_executable(unittest unittest.cpp)
+add_custom_target(test-unit
+		COMMAND ./unittest
+		DEPENDS unittest
+		)
+
+
+# MPI testing
+add_executable(mpi_unittest mpi_unittest.cpp)
+add_custom_target(test-mpi
+		COMMAND mpirun -np 8 ./mpi_unittest
+		DEPENDS mpi_unittest
+		)
 
 # Create the plot file
 add_custom_command(OUTPUT convergence_plot_data.tmp
@@ -65,5 +77,5 @@ add_custom_target(convergence-plot
 target_link_libraries(ps6_common_library fst ${DEPLIBS_C})
 target_link_libraries(poisson ps6_common_library ${DEPLIBS_C})
 target_link_libraries(convergence ps6_common_library ${DEPLIBS_C})
-
-target_link_libraries(transposetest ps6_common_library ${DEPLIBS_CXX} gtest gtest_main pthread)
+target_link_libraries(mpi_unittest ps6_common_library ${DEPLIBS_CXX} gtest gtest_main pthread)
+target_link_libraries(unittest ps6_common_library ${DEPLIBS_CXX} gtest gtest_main pthread)

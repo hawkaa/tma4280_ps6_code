@@ -1,14 +1,103 @@
 /* global includes */
 #include <stdio.h>
-#ifdef HAVE_MPI
-#include <mpi.h>
-#endif
+
 /* local includes */
 extern "C" {
-#include "ps6_common_library.h"
+	#include "ps6_common_library.h"
 }
+
 #include "gtest/gtest.h"
 
+class Matrix : public ::testing::Test {
+
+protected:
+	virtual void TearDown() {
+		free(b);
+		free(sizes);
+		free(ownership);
+	}
+
+	Real **b;
+	int *sizes;
+	int *ownership;
+	int num_ranks;
+	int m;
+};
+
+class Matrix3x3 : public Matrix {
+	protected:
+	
+	virtual void SetUp() {
+		b = createReal2DArray(3, 3);
+		int counter = 0;
+		for (int i = 0; i < 3; ++i) {
+			for(int j = 0; j < 3; ++j) {
+				b[i][j] = ++counter;
+			}
+		}
+		m = 3;
+		sizes = (int*)malloc(sizeof(int) * 2);
+		sizes[0] = 1;
+		sizes[1] = 2;
+
+		ownership = (int*)malloc(sizeof(int) * 3);
+		ownership[0] = 0;
+		ownership[1] = 1;
+		ownership[2] = 1;
+
+		num_ranks = 2;
+
+	}
+
+};
+
+class Matrix7x7 : public Matrix {
+	protected:
+	
+	virtual void SetUp() {
+		b = createReal2DArray(7, 7);
+		int counter = 0;
+		for (int i = 0; i < 7; ++i) {
+			for(int j = 0; j < 7; ++j) {
+				b[i][j] = ++counter;
+			}
+		}
+		m = 7;
+		sizes = (int*)malloc(sizeof(int) * 3);
+		sizes[0] = 2;
+		sizes[1] = 2;
+		sizes[2] = 3;
+
+		ownership = (int*)malloc(sizeof(int) * 7);
+		ownership[0] = 0;
+		ownership[1] = 0;
+		ownership[2] = 1;
+		ownership[3] = 1;
+		ownership[4] = 2;
+		ownership[5] = 2;
+		ownership[6] = 2;
+
+		num_ranks = 3;
+	}
+
+
+};
+
+TEST_F(Matrix3x3, get_ownership)
+{
+	int *owneship_output = get_ownership(m, num_ranks);
+	for (int i = 0; i < m; ++i) {
+		ASSERT_EQ(ownership[i], owneship_output[i]);
+	}
+}
+
+TEST_F(Matrix7x7, get_ownership)
+{
+	int *owneship_output = get_ownership(m, num_ranks);
+	for (int i = 0; i < m; ++i) {
+		ASSERT_EQ(ownership[i], owneship_output[i]);
+	}
+}
 
 TEST(belongs_to_rank, test1)
 {
@@ -22,23 +111,6 @@ TEST(belongs_to_rank, test1)
 	ASSERT_EQ(2, belongs_to_rank(6, s, 3));
 }	
 
-TEST(TransposeSingleProc, HardCoded)
-{
-	Real **b, **bt;
-	b = createReal2DArray(2, 2);
-	bt = createReal2DArray(2, 2);
-	b[0][0] = 1.0;
-	b[0][1] = 2.0;
-	b[1][0] = 3.0;
-	b[1][1] = 4.0;
-	
-	transpose(bt, b, 2);
-
-	ASSERT_FLOAT_EQ(bt[0][0], 1.0);
-	ASSERT_FLOAT_EQ(bt[0][1], 3.0);
-	ASSERT_FLOAT_EQ(bt[1][0], 2.0);
-	ASSERT_FLOAT_EQ(bt[1][1], 4.0);
-}
 
 TEST(create_Send_buf, test1)
 {
@@ -78,35 +150,6 @@ TEST(create_Send_buf, test1)
 
 	
 	
-}
-
-TEST(TransposeSingleProc, Looped)
-{
-	
-	int matrix_size;
-
-	int counter, i, j;
-	matrix_size = 100;
-	Real **b, **bt;
-	b = createReal2DArray(matrix_size, matrix_size);
-	bt = createReal2DArray(matrix_size, matrix_size);
-
-	counter = 1;
-	for (i = 0; i < matrix_size; ++i) {
-		for  (j = 0; j < matrix_size; ++j) {
-			b[i][j] = counter++;
-		}
-	}
-
-	transpose(bt, b, matrix_size);
-
-	for (i = 0; i < matrix_size; ++i) {
-		for  (j = 0; j < matrix_size; ++j) {
-			ASSERT_FLOAT_EQ(bt[j][i], b[i][j]);
-		}
-
-	}
-
 }
 
 TEST(create_SIZES, Even)
@@ -205,12 +248,8 @@ TEST(create_Sdispl, 7x7_3p)
 	ASSERT_EQ(12, sD2[2]);
 }
 
-TEST(get_matrix_rows, 3x3)
+TEST_F(Matrix3x3, get_matrix_rows)
 {
-	Real **b = createReal2DArray(3, 3);
-	b[0][0] = 1;	b[0][1] = 2;	b[0][2] = 3;
-	b[1][0] = 4;	b[1][1] = 5;	b[1][2] = 6;
-	b[2][0] = 7;	b[2][1] = 8;	b[2][2] = 9;
 	
 	int s[2] = {1, 2};
 
@@ -248,20 +287,6 @@ TEST(get_offset, p3)
 int
 main(int argc, char** argv)
 {
-	int ret_val, rank;
-	MPI::Init();
 	::testing::InitGoogleTest(&argc, argv);
-
-	#ifdef HAVE_MPI
-	rank = MPI::COMM_WORLD.Get_rank();	
-	#else
-	rank = 0;
-	#endif
-	if (rank == 0) {
-		ret_val = RUN_ALL_TESTS();
-	}
-
-
-	MPI::Finalize();
-	return ret_val;
+  	return RUN_ALL_TESTS();
 }
