@@ -31,6 +31,9 @@ extern Real
 **createReal2DArray(int m, int n);
 
 extern void
+transpose_part(Real **bt_part, Real **b_part, int m, int *sizes, int rank,
+			int num_ranks, int *s_count, int *s_displ);
+extern void
 transpose(Real **bt, Real **b, int m);
 
 extern int* 
