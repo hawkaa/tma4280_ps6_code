@@ -54,11 +54,15 @@ poisson(int n, function2D f)
 	h = 1.0 / (Real)n;
 	pi = 4.0 * atan(1.0);
 	
+	int offset = get_offset(rank, sizes);
 	/* fill in diagonal values */
-	for (i=0; i < m; i++) {
-		diag[i] = 2.0 * (1.0 - cos((i + 1) * pi / (Real)n));
+	for (i=0; i < sizes[rank]; i++) {
+		/* we want to get the value with offset equal to rank */
+		diag[i] = 2.0 * (1.0 - cos((offset + i + 1) * pi / (Real)n));
 	}
 
+		
+	
 	return 0.1;
 	/*	
 	Real *diag, **b, **bt, *z;
