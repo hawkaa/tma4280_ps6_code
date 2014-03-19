@@ -229,6 +229,25 @@ int
 	return s_displ;
 }
 
+int*
+get_ownership(int num_rows, int num_ranks)
+{
+	int *ownership = malloc(sizeof(int) * num_rows);
+	int *sizes = create_SIZES(num_rows, num_ranks);
+	
+	int rank, i;
+	rank = 0;
+	for (i = 0; i < num_rows; ++i) {
+		ownership[i] = rank;
+		--sizes[rank];
+		if (sizes[rank] == 0)
+			++rank;
+	}
+
+	return ownership;
+}
+
+
 int
 belongs_to_rank(int i, int *sizes, int sizes_length)
 {

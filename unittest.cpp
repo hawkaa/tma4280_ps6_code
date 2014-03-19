@@ -8,7 +8,23 @@ extern "C" {
 
 #include "gtest/gtest.h"
 
-class Matrix3x3 : public ::testing::Test {
+class Matrix : public ::testing::Test {
+
+protected:
+	virtual void TearDown() {
+		free(b);
+		free(sizes);
+		free(ownership);
+	}
+
+	Real **b;
+	int *sizes;
+	int *ownership;
+	int num_ranks;
+	int m;
+};
+
+class Matrix3x3 : public Matrix {
 	protected:
 	
 	virtual void SetUp() {
@@ -19,16 +35,23 @@ class Matrix3x3 : public ::testing::Test {
 				b[i][j] = ++counter;
 			}
 		}
+		m = 3;
+		sizes = (int*)malloc(sizeof(int) * 2);
+		sizes[0] = 1;
+		sizes[1] = 2;
+
+		ownership = (int*)malloc(sizeof(int) * 3);
+		ownership[0] = 0;
+		ownership[1] = 1;
+		ownership[2] = 1;
+
+		num_ranks = 2;
+
 	}
 
-	virtual void TearDown() {
-		free(this->b);
-	}
-
-	Real **b;
 };
 
-class Matrix7x7 : public ::testing::Test {
+class Matrix7x7 : public Matrix {
 	protected:
 	
 	virtual void SetUp() {
@@ -39,14 +62,42 @@ class Matrix7x7 : public ::testing::Test {
 				b[i][j] = ++counter;
 			}
 		}
+		m = 7;
+		sizes = (int*)malloc(sizeof(int) * 3);
+		sizes[0] = 2;
+		sizes[1] = 2;
+		sizes[2] = 3;
+
+		ownership = (int*)malloc(sizeof(int) * 7);
+		ownership[0] = 0;
+		ownership[1] = 0;
+		ownership[2] = 1;
+		ownership[3] = 1;
+		ownership[4] = 2;
+		ownership[5] = 2;
+		ownership[6] = 2;
+
+		num_ranks = 3;
 	}
 
-	virtual void TearDown() {
-		free(this->b);
-	}
 
-	Real **b;
 };
+
+TEST_F(Matrix3x3, get_ownership)
+{
+	int *owneship_output = get_ownership(m, num_ranks);
+	for (int i = 0; i < m; ++i) {
+		ASSERT_EQ(ownership[i], owneship_output[i]);
+	}
+}
+
+TEST_F(Matrix7x7, get_ownership)
+{
+	int *owneship_output = get_ownership(m, num_ranks);
+	for (int i = 0; i < m; ++i) {
+		ASSERT_EQ(ownership[i], owneship_output[i]);
+	}
+}
 
 TEST(belongs_to_rank, test1)
 {

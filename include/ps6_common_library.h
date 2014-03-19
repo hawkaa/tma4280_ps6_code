@@ -54,6 +54,9 @@ belongs_to_rank(int i, int *sizes, int sizes_length);
 extern int
 get_offset(int current_rank, int *sizes);
 
+extern int*
+get_ownership(int num_rows, int num_ranks);
+
 #ifdef __cplusplus
 }
 #endif
