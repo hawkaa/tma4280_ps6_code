@@ -8,6 +8,46 @@ extern "C" {
 
 #include "gtest/gtest.h"
 
+class Matrix3x3 : public ::testing::Test {
+	protected:
+	
+	virtual void SetUp() {
+		b = createReal2DArray(3, 3);
+		int counter = 0;
+		for (int i = 0; i < 3; ++i) {
+			for(int j = 0; j < 3; ++j) {
+				b[i][j] = ++counter;
+			}
+		}
+	}
+
+	virtual void TearDown() {
+		free(this->b);
+	}
+
+	Real **b;
+};
+
+class Matrix7x7 : public ::testing::Test {
+	protected:
+	
+	virtual void SetUp() {
+		b = createReal2DArray(7, 7);
+		int counter = 0;
+		for (int i = 0; i < 7; ++i) {
+			for(int j = 0; j < 7; ++j) {
+				b[i][j] = ++counter;
+			}
+		}
+	}
+
+	virtual void TearDown() {
+		free(this->b);
+	}
+
+	Real **b;
+};
+
 TEST(belongs_to_rank, test1)
 {
 	int s[3] = {2,2,3};
@@ -157,12 +197,8 @@ TEST(create_Sdispl, 7x7_3p)
 	ASSERT_EQ(12, sD2[2]);
 }
 
-TEST(get_matrix_rows, 3x3)
+TEST_F(Matrix3x3, get_matrix_rows)
 {
-	Real **b = createReal2DArray(3, 3);
-	b[0][0] = 1;	b[0][1] = 2;	b[0][2] = 3;
-	b[1][0] = 4;	b[1][1] = 5;	b[1][2] = 6;
-	b[2][0] = 7;	b[2][1] = 8;	b[2][2] = 9;
 	
 	int s[2] = {1, 2};
 

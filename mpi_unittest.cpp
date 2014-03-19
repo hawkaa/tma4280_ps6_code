@@ -13,7 +13,7 @@ extern "C" {
 static int rank;
 
 
-TEST(TransposeSingleProc, HardCoded)
+TEST(Transpose, HardCoded)
 {
 	Real **b, **bt;
 	b = createReal2DArray(2, 2);
@@ -32,7 +32,7 @@ TEST(TransposeSingleProc, HardCoded)
 	ASSERT_FLOAT_EQ(bt[1][1], 4.0);
 }
 
-TEST(TransposeSingleProc, Looped)
+TEST(Transpose, Looped)
 {
 	
 	int matrix_size;
@@ -63,6 +63,7 @@ TEST(TransposeSingleProc, Looped)
 	}
 
 }
+
 int
 main(int argc, char** argv)
 {
