@@ -1,15 +1,12 @@
 /* global includes */
 #include <stdio.h>
-#ifdef HAVE_MPI
-#include <mpi.h>
-#endif
+
 /* local includes */
 extern "C" {
-#include "ps6_common_library.h"
+	#include "ps6_common_library.h"
 }
-#include "gtest/gtest.h"
 
-static int rank;
+#include "gtest/gtest.h"
 
 TEST(belongs_to_rank, test1)
 {
@@ -23,22 +20,6 @@ TEST(belongs_to_rank, test1)
 	ASSERT_EQ(2, belongs_to_rank(6, s, 3));
 }	
 
-TEST(TransposeSingleProc, HardCoded)
-{
-	Real **b, **bt;
-	b = createReal2DArray(2, 2);
-	bt = createReal2DArray(2, 2);
-	b[0][0] = 1.0;
-	b[0][1] = 2.0;
-	b[1][0] = 3.0;
-	b[1][1] = 4.0;
-	
-	transpose(bt, b, 2);
-	ASSERT_FLOAT_EQ(bt[0][0], 1.0);
-	ASSERT_FLOAT_EQ(bt[0][1], 3.0);
-	ASSERT_FLOAT_EQ(bt[1][0], 2.0);
-	ASSERT_FLOAT_EQ(bt[1][1], 4.0);
-}
 
 TEST(create_Send_buf, test1)
 {
@@ -78,35 +59,6 @@ TEST(create_Send_buf, test1)
 
 	
 	
-}
-
-TEST(TransposeSingleProc, Looped)
-{
-	
-	int matrix_size;
-
-	int counter, i, j;
-	matrix_size = 100;
-	Real **b, **bt;
-	b = createReal2DArray(matrix_size, matrix_size);
-	bt = createReal2DArray(matrix_size, matrix_size);
-
-	counter = 1;
-	for (i = 0; i < matrix_size; ++i) {
-		for  (j = 0; j < matrix_size; ++j) {
-			b[i][j] = counter++;
-		}
-	}
-
-	transpose(bt, b, matrix_size);
-
-	for (i = 0; i < matrix_size; ++i) {
-		for  (j = 0; j < matrix_size; ++j) {
-			ASSERT_FLOAT_EQ(bt[j][i], b[i][j]);
-		}
-
-	}
-
 }
 
 TEST(create_SIZES, Even)
@@ -233,8 +185,8 @@ TEST(get_matrix_rows, 3x3)
 TEST(get_offset, p2)
 {
 	int s[2] = {1, 2};
-	//ASSERT_EQ(0, get_offset(0, s));
-	//ASSERT_EQ(1, get_offset(1, s));
+	ASSERT_EQ(0, get_offset(0, s));
+	ASSERT_EQ(1, get_offset(1, s));
 }
 
 TEST(get_offset, p3)
@@ -244,21 +196,10 @@ TEST(get_offset, p3)
 	ASSERT_EQ(3, get_offset(1, s));
 	ASSERT_EQ(7, get_offset(2, s));
 }
+
 int
 main(int argc, char** argv)
 {
-	int ret_val;
-	MPI::Init();
 	::testing::InitGoogleTest(&argc, argv);
-
-	#ifdef HAVE_MPI
-	rank = MPI::COMM_WORLD.Get_rank();	
-	#else
-	rank = 0;
-	#endif
-	
-  	ret_val = RUN_ALL_TESTS();
-
-	MPI::Finalize();
-	return ret_val;
+  	return RUN_ALL_TESTS();
 }

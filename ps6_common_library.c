@@ -269,8 +269,8 @@ create_Send_buf(Real** owned_rows, int current_rank, int num_ranks, int* sizes, 
 			/* get rank for current matric element */
 			rank = belongs_to_rank(j, sizes, num_ranks);
 			base = s_displ[rank] + (pos[rank]++);
-			printf("Base: %i\n", base);
-			printf("Val: %f\n", owned_rows[i][j]);
+		//	printf("Base: %i\n", base);
+		//	printf("Val: %f\n", owned_rows[i][j]);
 			//send_buf[base] = 0.0;
 			send_buf[base] = owned_rows[i][j];
 		}		
