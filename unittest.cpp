@@ -99,17 +99,6 @@ TEST_F(Matrix7x7, get_ownership)
 	}
 }
 
-TEST(belongs_to_rank, test1)
-{
-	int s[3] = {2,2,3};
-	ASSERT_EQ(0, belongs_to_rank(0, s, 3));
-	ASSERT_EQ(0, belongs_to_rank(1, s, 3));
-	ASSERT_EQ(1, belongs_to_rank(2, s, 3));
-	ASSERT_EQ(1, belongs_to_rank(3, s, 3));
-	ASSERT_EQ(2, belongs_to_rank(4, s, 3));
-	ASSERT_EQ(2, belongs_to_rank(5, s, 3));
-	ASSERT_EQ(2, belongs_to_rank(6, s, 3));
-}	
 
 
 TEST(create_Send_buf, test1)

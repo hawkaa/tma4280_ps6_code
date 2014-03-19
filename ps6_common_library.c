@@ -13,14 +13,18 @@
 
 /*
  * Poisson solver.
- * Should only be called from processor 0
+ * Will return max error
+ * Should be called from all processes
+ * Only rank 0 will have valid result
  */
 Real
-**poisson(int problem_size, function2D f)
+poisson(int problem_size, function2D f)
 {
 	Real *diag, **b, **bt, *z;
 	Real pi, h, umax;
 	int i, j, n, m, nn;
+
+	return 0.1;
 	
 	/* the total number of grid points in each spatial direction is (n+1) */
 	/* the total number of degrees-of-freedom in each spatial direction is (n-1) */
@@ -77,7 +81,7 @@ Real
 	  fstinv_(b[j], &n, z, &nn);
 	}
 	
-	return b;
+	//return b;
 
 }
 
@@ -107,7 +111,7 @@ printArr(Real* arr, int size)
 
 /*
  * Transpose function
- * SHOULD ONLY BE CALLED FROM PROCESSOR 0
+ * Only rank 0 will have a valid result
  */
 void
 transpose(Real **bt, Real **b, int m)
@@ -141,10 +145,19 @@ transpose(Real **bt, Real **b, int m)
 	
 	Real** partial_trans = create_partial_transposed(recv_buf, m, rank, sizes);
 
-	if(rank == 0) print2dArray(partial_trans, sizes[rank], m);		
+	//if(rank == 0) print2dArray(partial_trans, sizes[rank], m);		
 
 	/* samle sammen på p0 og returner */
-  	
+  	if(rank == 0){	
+		int i;
+		for(i = 1; i < size; i++){
+			MPI_Recv(&(bt[get_offset(i, sizes)][0]), m*sizes[i], MPI_DOUBLE, i, 100, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+		}
+		memcpy(bt[0], partial_trans[0], sizeof(Real) * m * sizes[0]);
+	} else{
+		MPI_Send(&(partial_trans[0][0]), m*sizes[rank], MPI_DOUBLE, 0 , 100, MPI_COMM_WORLD);
+	}	
+
 	#else
 	int i, j;
   	for (j=0; j < m; j++) {
@@ -255,27 +268,6 @@ get_ownership(int num_rows, int num_ranks)
 	return ownership;
 }
 
-
-int
-belongs_to_rank(int i, int *sizes, int sizes_length)
-{
-	int j;
-	int sizes_dup[sizes_length];
-	for (j = 0; j < sizes_length; ++j) {
-		sizes_dup[j] = sizes[j];
-	}
-	
-	int rank;
-	rank = 0;
-	for(j = 0; j < i; ++j) {
-		--sizes_dup[rank];
-		if (sizes_dup[rank] == 0)
-			++rank;
-	}
-	return rank;
-
-}
-
 Real*
 create_Send_buf(Real** owned_rows, int current_rank, int num_ranks, int* sizes, int m, int* s_displ, int* s_count)
 {
@@ -287,15 +279,19 @@ create_Send_buf(Real** owned_rows, int current_rank, int num_ranks, int* sizes, 
 	int rank;
 	Real* send_buf = createRealArray(send_buffer_size);
 	
-	int pos[num_ranks];
+
+	int* column_ownership = get_ownership(m, num_ranks);
+
+
+	int offsets[num_ranks];
 	for(i = 0; i < num_ranks; ++i)
-		pos[i] = 0;
+		offsets[i] = 0;
 	
 	for(i = 0; i < num_rows; i++){
 		for(j = 0; j < m; j++) {
 			/* get rank for current matric element */
-			rank = belongs_to_rank(j, sizes, num_ranks);
-			base = s_displ[rank] + (pos[rank]++);
+			rank = column_ownership[j];
+			base = s_displ[rank] + (offsets[rank]++);
 			send_buf[base] = owned_rows[i][j];
 		}		
 	}

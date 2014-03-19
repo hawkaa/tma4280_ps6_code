@@ -21,7 +21,7 @@ fstinv_(Real *v, int *n, Real *w, int *nn);
 /* functions defined in ps6_common_library.c */
 
 extern Real
-**poisson(int problem_size, function2D f);
+poisson(int problem_size, function2D f);
 
 
 extern Real
@@ -51,8 +51,6 @@ create_partial_transposed(Real* recv_buf, int m, int current_rank, int* sizes);
 extern Real**
 get_matrix_rows(Real** b, int m, int current_rank,  int *sizes);
 
-extern int
-belongs_to_rank(int i, int *sizes, int sizes_length); 
 
 extern int
 get_offset(int current_rank, int *sizes);

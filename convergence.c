@@ -60,23 +60,21 @@ main(int argc, char** argv)
 	#else
 	rank = 0;
 	#endif
-	if (rank == 0) {
-		int i, j;
-		Real **b;
-		Real umax;
-	
-		b = createReal2DArray(pow(2, N_MAX) - 1, pow(2, N_MAX) - 1);
-	
-		printf("# Convergence test for Problem Set 6 poisson solver\n");
-		printf("# Problem Size\tAbsolute error\n");
-	
-		for (i = N_MIN; i <= N_MAX; ++i) {
-			j = pow(2, i);
-			b = poisson(j, *f);
-			umax = get_umax(b, j, *u);
+
+	int i, j;
+	Real umax;
+
+	printf("# Convergence test for Problem Set 6 poisson solver\n");
+	printf("# Problem Size\tAbsolute error\n");
+
+	for (i = N_MIN; i <= N_MAX; ++i) {
+		j = pow(2, i);
+		umax = poisson(j, *f);
+		if (rank == 0) {
 			printf("%i\t%.16e\n", j, umax);
 		}
 	}
+
 	#ifdef HAVE_MPI
 	MPI_Finalize();
 	#endif
