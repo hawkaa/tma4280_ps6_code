@@ -18,7 +18,7 @@
  * Only rank 0 will have valid result
  */
 Real
-poisson(int n, function2D f)
+poisson(int n, function2D f, function2D u)
 {
 	int rank, size;
 	#ifdef HAVE_MPI
@@ -105,7 +105,28 @@ poisson(int n, function2D f)
 		fstinv_(b_part[i], &n, z, &nn);
 	} 
 
-	return 0.1;
+	/* calculate umax if reference function is passed as a parameter */
+	if (u == NULL) {
+		return -1.0;
+	} else {
+		Real umax, sum;
+		Real x, y;
+		umax = 0.0;
+		for (i = 0; i < sizes[rank]; ++i) {
+			for (j = 0; j < m; ++j) {
+				x = (Real)(j + 1) / (Real)(n);
+				y = (Real)(offset + i + 1) / (Real)(n);
+				sum = fabs((*u)(x, y) - b_part[i][j]);
+				if (sum > umax) {
+					umax = sum;
+				}
+			}
+		}
+		Real umax_max;
+		MPI_Reduce(&umax, &umax_max, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
+		return umax;
+
+	}
 	/*	
 	Real *diag, **b, **bt, *z;
 	Real pi, h, umax;
