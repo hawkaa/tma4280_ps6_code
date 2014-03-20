@@ -30,10 +30,10 @@ poisson(int n, function2D f)
 	#endif
 
 
-	Real **b_part, **bt_part, *diag, *z;
+	Real **b_part, **bt_part, *diag;
 	int m, nn;
-	int i, j;
-	int *sizes, *s_count, *s_displ;
+	int i;
+	int* sizes;
 	Real h, pi;
 
 
@@ -44,67 +44,25 @@ poisson(int n, function2D f)
 	sizes = create_SIZES(m, size);
 	
 	/* alloc diagonal */
-	diag = createRealArray(m);
+	diag = createRealArray(sizes[rank]);
 
 	/* alloc partial matrices */
 	b_part = createReal2DArray(sizes[rank], m);
 	bt_part = createReal2DArray(sizes[rank], m);
-
-	/* helper array */
-	z = createRealArray(nn);
 	
 	/* reference values */
 	h = 1.0 / (Real)n;
 	pi = 4.0 * atan(1.0);
 	
 	int offset = get_offset(rank, sizes);
-
 	/* fill in diagonal values */
-	for (i = 0; i < m; ++i) {
+	for (i=0; i < sizes[rank]; i++) {
 		/* we want to get the value with offset equal to rank */
-		diag[i] = 2.0 * (1.0 - cos((i + 1) * pi / (Real)n));
+		diag[i] = 2.0 * (1.0 - cos((offset + i + 1) * pi / (Real)n));
 	}
 
-	Real x, y;
-	for (i = 0; i < sizes[rank]; ++i) {
-		for (j = 0; j < m; ++j) {
-			x = (Real)(j + 1) / (Real)(n);
-			y = (Real)(offset + i + 1) / (Real)(n);
-			b_part[i][j] = h * h * (*f)(x, y);
-		}
-	}
+		
 	
-	for (i = 0; i < sizes[rank]; ++i) {
-		fst_(b_part[i], &n, z, &nn);
-	}
-	
-	s_count = create_Scount(rank, size, sizes);
-	s_displ = create_Sdispl(rank, size, sizes);
-
-	/* transpose */
-	transpose_part(bt_part, b_part, m, sizes, rank, size, s_count, s_displ);
-	
-	
-	for (i = 0; i < sizes[rank]; ++i) {
-		fstinv_(bt_part[i], &n, z, &nn);
-	} 
-
-	for (i = 0; i < sizes[rank]; ++i) {
-		for (j = 0; j < m; ++j) {
-			bt_part[i][j] = bt_part[i][j] / (diag[i + offset] + diag[j]);
-		}
-	}
-
-	for (i = 0; i < sizes[rank]; ++i) {
-		fst_(bt_part[i], &n, z, &nn);
-	} 
-
-	transpose_part(b_part, bt_part, m, sizes, rank, size, s_count, s_displ);
-	
-	for (i = 0; i < sizes[rank]; ++i) {
-		fstinv_(b_part[i], &n, z, &nn);
-	} 
-
 	return 0.1;
 	/*	
 	Real *diag, **b, **bt, *z;
@@ -193,18 +151,7 @@ printArr(Real* arr, int size)
 	printf("\n");
 }
 
-void
-transpose_part(Real **bt_part, Real **b_part, int m, int *sizes, int rank,
-			int num_ranks, int *s_count, int *s_displ)
-{
-	
-	Real* send_buf = create_Send_buf(b_part, rank, num_ranks, sizes, m, s_displ, s_count);
-	Real* recv_buf = (Real*)malloc(sizeof(Real) * m *sizes[rank]);
 
-	MPI_Alltoallv(send_buf, s_count, s_displ, MPI_DOUBLE, recv_buf, s_count, s_displ, MPI_DOUBLE, MPI_COMM_WORLD);
-	
-	bt_part = create_partial_transposed(recv_buf, m, rank, sizes);
-}
 
 /*
  * Transpose function
