@@ -1,85 +1,123 @@
 /* global includes */
 #include <stdio.h>
+
 #ifdef HAVE_MPI
 #include <mpi.h>
 #endif
 
 /* local includes */
 extern "C" {
-#include "ps6_common_library.h"
+	/* as this is a c++ program, we need to wrap it with "C" */
+	#include "ps6_common_library.h"
 }
+
 #include "gtest/gtest.h"
 
+/* save current rank */
 static int rank;
 
-
-TEST(Transpose, HardCoded)
+/*
+ * Unitest to check that the parallel matrix transpose function runs.
+ * This one is a simple hard-coded 2x2 matrix.
+ */
+TEST(transpose_parallel, HardCoded)
 {
-	Real **b, **bt;
-	b = createReal2DArray(2, 2);
-	bt = createReal2DArray(2, 2);
+	/* matrix buffers */
+	Real **b = createReal2DArray(2, 2);
+	Real **bt = createReal2DArray(2, 2);
+
+	/* values */
 	b[0][0] = 1.0;
 	b[0][1] = 2.0;
 	b[1][0] = 3.0;
 	b[1][1] = 4.0;
 	
+	/* run transpose function */
 	transpose_parallel(bt, b, 2);
-	if (rank != 0)
-		return;
-	ASSERT_FLOAT_EQ(bt[0][0], 1.0);
-	ASSERT_FLOAT_EQ(bt[0][1], 3.0);
-	ASSERT_FLOAT_EQ(bt[1][0], 2.0);
-	ASSERT_FLOAT_EQ(bt[1][1], 4.0);
+
+	if (rank == 0) {
+		/* assert if rank 0 */
+		ASSERT_FLOAT_EQ(bt[0][0], 1.0);
+		ASSERT_FLOAT_EQ(bt[0][1], 3.0);
+		ASSERT_FLOAT_EQ(bt[1][0], 2.0);
+		ASSERT_FLOAT_EQ(bt[1][1], 4.0);
+	}
+	free(b);
+	free(bt);
 }
 
+/*
+ * Unitest to check that the parallel matrix transpose function runs.
+ * this one creates a 100x100 matrix an checks the 
+ */
 TEST(Transpose, Looped)
 {
 	
-	int matrix_size;
+	/* loop variables */
+	int i, j;
+	
+	/* matrix size */
+	int matrix_size = 100;
 
-	int counter, i, j;
-	matrix_size = 100;
-	Real **b, **bt;
-	b = createReal2DArray(matrix_size, matrix_size);
-	bt = createReal2DArray(matrix_size, matrix_size);
+	/* matrix buffers */
+	Real **b = createReal2DArray(matrix_size, matrix_size);
+	Real **bt = createReal2DArray(matrix_size, matrix_size);
 
-	counter = 1;
+	int counter = 0;
 	for (i = 0; i < matrix_size; ++i) {
 		for  (j = 0; j < matrix_size; ++j) {
-			b[i][j] = counter++;
+			b[i][j] = ++counter;
 		}
 	}
-
+	
+	/* run the transpose function */
 	transpose_parallel(bt, b, matrix_size);
 
-	if (rank != 0)
-		return;
-
-	for (i = 0; i < matrix_size; ++i) {
-		for  (j = 0; j < matrix_size; ++j) {
-			ASSERT_FLOAT_EQ(bt[j][i], b[i][j]);
+	if (rank == 0) {
+		/* assert if rank 0 */
+		for (i = 0; i < matrix_size; ++i) {
+			for  (j = 0; j < matrix_size; ++j) {
+				ASSERT_FLOAT_EQ(bt[j][i], b[i][j]);
+			}
+	
 		}
-
 	}
+	free(b);
+	free(bt);
 
 }
 
+/*
+ * Main function
+ * Program should only run if MPI is enabled
+ */
 int
 main(int argc, char** argv)
 {
+	#ifdef HAVE_MPI
+
 	int ret_val;
 
+	/* init mpi and gtest */
 	MPI::Init();
 	::testing::InitGoogleTest(&argc, argv);
 
-	#ifdef HAVE_MPI
+	/* save rank */
 	rank = MPI::COMM_WORLD.Get_rank();	
-	#else
-	rank = 0;
-	#endif
 	
+	/* run all tests */
   	ret_val = RUN_ALL_TESTS();
 
+	/* finalize MPI */
 	MPI::Finalize();
-	return ret_val;
+	
+	exit(ret_val);
+
+	#else
+
+	printf("MPI must be enabled to run these tests.\n");
+	exit(1);
+
+	#endif
+	
 }

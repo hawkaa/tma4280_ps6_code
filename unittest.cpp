@@ -3,11 +3,13 @@
 
 /* local includes */
 extern "C" {
+	/* as this is a c++ program, we need to wrap it with "C" */
 	#include "ps6_common_library.h"
 }
 
 #include "gtest/gtest.h"
 
+/* matrix data base class */
 class Matrix : public ::testing::Test {
 
 protected:
@@ -24,6 +26,14 @@ protected:
 	int m;
 };
 
+/*
+ * Example matrix 1
+ *
+ *	1 2 3
+ *  	-----
+ *  	4 5 6
+ *	7 8 9
+ */
 class Matrix3x3 : public Matrix {
 	protected:
 	
@@ -50,7 +60,11 @@ class Matrix3x3 : public Matrix {
 	}
 
 };
-
+/*
+ * Example matrix 2
+ *
+ * 7x7, filled out row-wise with numbers 1-49
+ */
 class Matrix7x7 : public Matrix {
 	protected:
 	
@@ -83,28 +97,37 @@ class Matrix7x7 : public Matrix {
 
 };
 
+/*
+ * Test ownership
+ */
 TEST_F(Matrix3x3, get_ownership)
 {
-	int *owneship_output = get_ownership(m, num_ranks);
+	int *ownership_output = get_ownership(m, num_ranks);
 	for (int i = 0; i < m; ++i) {
-		ASSERT_EQ(ownership[i], owneship_output[i]);
+		ASSERT_EQ(ownership[i], ownership_output[i]);
 	}
+	free(ownership_output);
 }
 
+/*
+ * Test ownership
+ */
 TEST_F(Matrix7x7, get_ownership)
 {
-	int *owneship_output = get_ownership(m, num_ranks);
+	int *ownership_output = get_ownership(m, num_ranks);
 	for (int i = 0; i < m; ++i) {
-		ASSERT_EQ(ownership[i], owneship_output[i]);
+		ASSERT_EQ(ownership[i], ownership_output[i]);
 	}
+	free(ownership_output);
 }
 
-
+/*
+ * Test serial transpose
+ */
 TEST(transpose, HardCoded)
 {
-	Real **b, **bt;
-	b = createReal2DArray(2, 2);
-	bt = createReal2DArray(2, 2);
+	Real **b = createReal2DArray(2, 2);
+	Real **bt = createReal2DArray(2, 2);
 	b[0][0] = 1.0;
 	b[0][1] = 2.0;
 	b[1][0] = 3.0;
@@ -115,64 +138,71 @@ TEST(transpose, HardCoded)
 	ASSERT_FLOAT_EQ(bt[0][1], 3.0);
 	ASSERT_FLOAT_EQ(bt[1][0], 2.0);
 	ASSERT_FLOAT_EQ(bt[1][1], 4.0);
+
+	free(b);
+	free(bt);
 }
 
 TEST(transpose, Looped)
 {
+	/* loop variables */
+	int i, j;
 	
-	int matrix_size;
+	/* matrix size */
+	int matrix_size = 100;
 
-	int counter, i, j;
-	matrix_size = 100;
-	Real **b, **bt;
-	b = createReal2DArray(matrix_size, matrix_size);
-	bt = createReal2DArray(matrix_size, matrix_size);
+	/* matrix buffers */
+	Real **b = createReal2DArray(matrix_size, matrix_size);
+	Real **bt = createReal2DArray(matrix_size, matrix_size);
 
-	counter = 1;
+	int counter = 0;
 	for (i = 0; i < matrix_size; ++i) {
 		for  (j = 0; j < matrix_size; ++j) {
-			b[i][j] = counter++;
+			b[i][j] = ++counter;
 		}
 	}
-
+	
+	/* run the transpose function */
 	transpose(bt, b, matrix_size);
 
-
+	/* assert if rank 0 */
 	for (i = 0; i < matrix_size; ++i) {
 		for  (j = 0; j < matrix_size; ++j) {
 			ASSERT_FLOAT_EQ(bt[j][i], b[i][j]);
 		}
-
+	
 	}
+	free(b);
+	free(bt);
 
 }
 
 /*
- * create_send_buffer
+ * Test create_send_buffer
  */
-
 TEST(create_send_buffer, test1)
 {
-	int i, j;
-	Real **b;
-	Real *send_buf;
-	b = createReal2DArray(2, 7);
+	Real **b = createReal2DArray(2, 7);	
+	
 	int value = 1;
-	for(i = 0; i < 2; i++){
-		for(j = 0; j < 7; j++){
+	for(int i = 0; i < 2; i++){
+		for(int j = 0; j < 7; j++){
 			b[i][j] = value;
-			value++;	
+			++value;
 		}
 	}
+
 	/* check if correctly filled out */
 	ASSERT_FLOAT_EQ(3.0, b[0][2]);
 	ASSERT_FLOAT_EQ(8.0, b[1][0]);
 
-	int s[3] = {2,2,3};
-	int *sC = create_Scount(0, 3, s);
-	int *sD = create_Sdispl(0, 3, s);
+	/* generate proper test data */
+	int sizes[3] = {2,2,3};
+	int *s_count = create_Scount(0, 3, sizes);
+	int *s_displ = create_Sdispl(0, 3, sizes);
 	
-	send_buf = create_send_buffer(b, 7, s, 0, 3, sD, sC);
+	Real *send_buf = create_send_buffer(b, 7, sizes, 0, 3, s_displ, s_count);
+
 	ASSERT_FLOAT_EQ(1, send_buf[0]);
 	ASSERT_FLOAT_EQ(2, send_buf[1]);
 	ASSERT_FLOAT_EQ(8, send_buf[2]);
@@ -188,81 +218,133 @@ TEST(create_send_buffer, test1)
 	ASSERT_FLOAT_EQ(13, send_buf[12]);
 	ASSERT_FLOAT_EQ(14, send_buf[13]);
 
+	free(b);
+	free(s_count);
+	free(s_displ);
+	free(send_buf);
 	
 	
 }
 
+/*
+ * Test create_sizes
+ */
 TEST(create_SIZES, Even)
 {
 	int *s = create_SIZES(8, 4);
+
 	ASSERT_EQ(2, s[0]);
 	ASSERT_EQ(2, s[1]);
 	ASSERT_EQ(2, s[2]);
 	ASSERT_EQ(2, s[3]);
+
+	free(s);
 }
 
+/*
+ * Test create_sizes
+ */
 TEST(create_SIZES, LessRowsThanProc)
 {
 	int *s = create_SIZES(3,5);
+
 	ASSERT_EQ(0, s[0]);
 	ASSERT_EQ(0, s[1]);
 	ASSERT_EQ(1, s[2]);
 	ASSERT_EQ(1, s[3]);
 	ASSERT_EQ(1, s[4]);
+
+	free(s);
 }
 
+/*
+ * Test create_sizes
+ */
 TEST(create_SIZES, OneProc)
 {
 	int *s = create_SIZES(4,1);
+
 	ASSERT_EQ(4, s[0]);
+
+	free(s);
 }
 
+/*
+ * test create_sizes
+ */
 TEST(create_SIZES, UnEven)
 {
 	int *s = create_SIZES(7, 4);
+
 	ASSERT_EQ(1, s[0]);
 	ASSERT_EQ(2, s[1]);
 	ASSERT_EQ(2, s[2]);
 	ASSERT_EQ(2, s[3]);
+
+	free(s);
 }
 
+/*
+ * test create_s_count
+ * Testing on a 3x3 matrix for 2 proccessors
+ */
 TEST(create_Scount, 3x3_2p)
 {
-	int s[2] = {1, 2};
-	int *sC1 = create_Scount(0, 2, s);
-	ASSERT_EQ(1, sC1[0]);
-	ASSERT_EQ(2, sC1[1]);
-	int *sC2 = create_Scount(1, 2, s);
-	ASSERT_EQ(2, sC2[0]);
-	ASSERT_EQ(4, sC2[1]);
+	int sizes[2] = {1, 2};
+	
+	/* s_count for rank 0 */
+
+	int *s_count_r0 = create_Scount(0, 2, sizes);
+	ASSERT_EQ(1, s_count_r0[0]);
+	ASSERT_EQ(2, s_count_r0[1]);
+	free(s_count_r0);
+
+	int *s_count_r1 = create_Scount(1, 2, sizes);
+	ASSERT_EQ(2, s_count_r1[0]);
+	ASSERT_EQ(4, s_count_r1[1]);
+	free(s_count_r1);
 }
 
+/*
+ * test create_s_count
+ * testing on a 7x7 matrix for 3 processors
+ */
 TEST(create_Scount, 7x7_3p)
 {
-	int s[3] = {2, 2, 3};
-	int *sC1 = create_Scount(0, 3, s);
-	ASSERT_EQ(4, sC1[0]);
-	ASSERT_EQ(4, sC1[1]);
-	ASSERT_EQ(6, sC1[2]);
-	int *sC2 = create_Scount(1, 3, s);
-	ASSERT_EQ(4, sC2[0]);
-	ASSERT_EQ(4, sC2[1]);
-	ASSERT_EQ(6, sC2[2]);
-	int *sC3 = create_Scount(2, 3, s);
-	ASSERT_EQ(6, sC3[0]);
-	ASSERT_EQ(6, sC3[1]);
-	ASSERT_EQ(9, sC3[2]);
+	int sizes[3] = {2, 2, 3};
+
+	int *s_count_r0 = create_Scount(0, 3, sizes);
+	ASSERT_EQ(4, s_count_r0[0]);
+	ASSERT_EQ(4, s_count_r0[1]);
+	ASSERT_EQ(6, s_count_r0[2]);
+	free(s_count_r0);
+
+	int *s_count_r1 = create_Scount(1, 3, sizes);
+	ASSERT_EQ(4, s_count_r1[0]);
+	ASSERT_EQ(4, s_count_r1[1]);
+	ASSERT_EQ(6, s_count_r1[2]);
+	free(s_count_r1);
+
+	int *s_count_r2 = create_Scount(2, 3, sizes);
+	ASSERT_EQ(6, s_count_r2[0]);
+	ASSERT_EQ(6, s_count_r2[1]);
+	ASSERT_EQ(9, s_count_r2[2]);
+	free(s_count_r2);
 }
 
 TEST(create_Sdispl, 3x3_2p)
 {
-	int s[2] = {1, 2};
-	int *sD1 = create_Sdispl(0, 2, s);
-	ASSERT_EQ(0, sD1[0]);
-	ASSERT_EQ(1, sD1[1]);
-	int *sD2 = create_Sdispl(1, 2, s);
-	ASSERT_EQ(0, sD2[0]);
-	ASSERT_EQ(2, sD2[1]);
+	int sizes[2] = {1, 2};
+
+	int *s_displ_r0 = create_Sdispl(0, 2, sizes);
+	ASSERT_EQ(0, s_displ_r0[0]);
+	ASSERT_EQ(1, s_displ_r0[1]);
+	free(s_displ_r0);
+
+	int *s_displ_r1 = create_Sdispl(1, 2, sizes);
+	ASSERT_EQ(0, s_displ_r1[0]);
+	ASSERT_EQ(2, s_displ_r1[1]);
+	free(s_displ_r1);
 }
 
 TEST(create_Sdispl, 7x7_3p)
