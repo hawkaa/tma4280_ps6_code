@@ -102,7 +102,7 @@ class Matrix7x7 : public Matrix {
  */
 TEST_F(Matrix3x3, get_ownership)
 {
-	int *ownership_output = get_ownership(m, num_ranks);
+	int *ownership_output = get_ownership(m, sizes, num_ranks);
 	for (int i = 0; i < m; ++i) {
 		ASSERT_EQ(ownership[i], ownership_output[i]);
 	}
@@ -114,7 +114,7 @@ TEST_F(Matrix3x3, get_ownership)
  */
 TEST_F(Matrix7x7, get_ownership)
 {
-	int *ownership_output = get_ownership(m, num_ranks);
+	int *ownership_output = get_ownership(m, sizes, num_ranks);
 	for (int i = 0; i < m; ++i) {
 		ASSERT_EQ(ownership[i], ownership_output[i]);
 	}
@@ -349,83 +349,96 @@ TEST(create_Sdispl, 3x3_2p)
 
 TEST(create_Sdispl, 7x7_3p)
 {
-	int s[3] = {2, 2, 3};
+	int sizes[3] = {2, 2, 3};
 	
-	/* proc 0 */
-	int *sD0 = create_Sdispl(0, 3, s);
-	ASSERT_EQ(0, sD0[0]);
-	ASSERT_EQ(4, sD0[1]);
-	ASSERT_EQ(8, sD0[2]);
+	/* rank 0 */
+	int *s_displ_r0 = create_Sdispl(0, 3, sizes);
+	ASSERT_EQ(0, s_displ_r0[0]);
+	ASSERT_EQ(4, s_displ_r0[1]);
+	ASSERT_EQ(8, s_displ_r0[2]);
+	free(s_displ_r0);
 
-	/* proc 1 */
-	int *sD1 = create_Sdispl(1, 3, s);
-	ASSERT_EQ(0, sD1[0]);
-	ASSERT_EQ(4, sD1[1]);
-	ASSERT_EQ(8, sD1[2]);
+	/* rank 1 */
+	int *s_displ_r1 = create_Sdispl(1, 3, sizes);
+	ASSERT_EQ(0, s_displ_r1[0]);
+	ASSERT_EQ(4, s_displ_r1[1]);
+	ASSERT_EQ(8, s_displ_r1[2]);
+	free(s_displ_r1);
 
-	/* proc 2 */
-	int *sD2 = create_Sdispl(2, 3, s);
-	ASSERT_EQ(0, sD2[0]);
-	ASSERT_EQ(6, sD2[1]);
-	ASSERT_EQ(12, sD2[2]);
+	/* rank 2 */
+	int *s_displ_r2 = create_Sdispl(2, 3, sizes);
+	ASSERT_EQ(0, s_displ_r2[0]);
+	ASSERT_EQ(6, s_displ_r2[1]);
+	ASSERT_EQ(12, s_displ_r2[2]);
+	free(s_displ_r2);
 }
 
 TEST_F(Matrix3x3, get_matrix_rows)
 {
 	
-	int s[2] = {1, 2};
 
-	Real **b0 = get_matrix_rows(b, 3, 0, s);
+	Real **b0 = get_matrix_rows(b, 3, 0, sizes);
 	ASSERT_FLOAT_EQ(1, b0[0][0]);
 	ASSERT_FLOAT_EQ(2, b0[0][1]);
 	ASSERT_FLOAT_EQ(3, b0[0][2]);
+	free(b0);
 
-	Real **b1 = get_matrix_rows(b, 3, 1, s);
+	Real **b1 = get_matrix_rows(b, 3, 1, sizes);
 	ASSERT_FLOAT_EQ(4, b1[0][0]);
 	ASSERT_FLOAT_EQ(5, b1[0][1]);
 	ASSERT_FLOAT_EQ(6, b1[0][2]);
 	ASSERT_FLOAT_EQ(7, b1[1][0]);
 	ASSERT_FLOAT_EQ(8, b1[1][1]);
 	ASSERT_FLOAT_EQ(9, b1[1][2]);
+	free(b1);
 
 
 }
 
 TEST(get_offset, p2)
 {
-	int s[2] = {1, 2};
-	ASSERT_EQ(0, get_offset(0, s));
-	ASSERT_EQ(1, get_offset(1, s));
+	int sizes[2] = {1, 2};
+
+	ASSERT_EQ(0, get_offset(0, sizes));
+	ASSERT_EQ(1, get_offset(1, sizes));
 }
 
 TEST(get_offset, Even)
 {
-	int s[4] = {2, 2, 2, 2};
-	ASSERT_EQ(0, get_offset(0, s));
-	ASSERT_EQ(2, get_offset(1, s));
-	ASSERT_EQ(4, get_offset(2, s));
-	ASSERT_EQ(6, get_offset(3, s));
+	int sizes[4] = {2, 2, 2, 2};
+
+	ASSERT_EQ(0, get_offset(0, sizes));
+	ASSERT_EQ(2, get_offset(1, sizes));
+	ASSERT_EQ(4, get_offset(2, sizes));
+	ASSERT_EQ(6, get_offset(3, sizes));
 }
 
 TEST(get_offset, p3)
 {
-	int s[3] = {3, 4, 4};
-	ASSERT_EQ(0, get_offset(0, s));
-	ASSERT_EQ(3, get_offset(1, s));
-	ASSERT_EQ(7, get_offset(2, s));
+	int sizes[3] = {3, 4, 4};
+
+	ASSERT_EQ(0, get_offset(0, sizes));
+	ASSERT_EQ(3, get_offset(1, sizes));
+	ASSERT_EQ(7, get_offset(2, sizes));
 }
 
 TEST(get_offest, combined)
 {
-	int *s = create_SIZES(8, 4);
-	ASSERT_EQ(0, get_offset(0, s));
-	ASSERT_EQ(2, get_offset(1, s));
-	ASSERT_EQ(4, get_offset(2, s));
-	ASSERT_EQ(6, get_offset(3, s));
+	int *sizes = create_SIZES(8, 4);
+
+	ASSERT_EQ(0, get_offset(0, sizes));
+	ASSERT_EQ(2, get_offset(1, sizes));
+	ASSERT_EQ(4, get_offset(2, sizes));
+	ASSERT_EQ(6, get_offset(3, sizes));
+
+	free(sizes);
 
 }
 
-
+/*
+ * Main function
+ * Runs all tests
+ */
 int
 main(int argc, char** argv)
 {

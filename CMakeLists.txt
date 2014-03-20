@@ -59,13 +59,13 @@ add_custom_target(test-unit
 # MPI testing
 add_executable(mpi_unittest mpi_unittest.cpp)
 add_custom_target(test-mpi
-		COMMAND mpirun -np 8 ./mpi_unittest
+		COMMAND mpirun -np 8 $(CMAKE_BINARY_DIR)/mpi_unittest
 		DEPENDS mpi_unittest
 		)
 
 # Create the plot file
 add_custom_command(OUTPUT convergence_plot_data.tmp
-		COMMAND mpirun -np 8 convergence > convergence_plot_data.tmp
+		COMMAND mpirun -np 8 $(CMAKE_BINARY_DIR)/convergence > convergence_plot_data.tmp
 		DEPENDS convergence
 		COMMENT "Needed to create plot data")
 

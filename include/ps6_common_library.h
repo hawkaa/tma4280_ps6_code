@@ -65,7 +65,7 @@ extern int
 get_offset(int current_rank, int *sizes);
 
 extern int*
-get_ownership(int num_rows, int num_ranks);
+get_ownership(int m, int* sizes, int num_ranks);
 
 #ifdef __cplusplus
 }

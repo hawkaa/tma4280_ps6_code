@@ -10,6 +10,27 @@
 /*local includes */
 #include "ps6_common_library.h"
 
+static void
+print2dArray(Real** arr, int rows, int cols)
+{
+	int i, j;
+	for(i = 0; i <rows; i++){
+		for(j = 0; j < cols; j++){
+			printf("%f   ", arr[i][j]);
+		}
+		printf("\n");
+	}
+}
+
+static void
+printArr(Real* arr, int size)
+{
+	int i;
+	for(i = 0; i < size; i++){
+		printf("%f   ", arr[i]);
+	}
+	printf("\n");
+}
 
 static Real
 get_umax(Real **b, int n, function2D u)
@@ -84,9 +105,11 @@ poisson_parallel(int n, function2D f, function2D u)
 	int offset = get_offset(rank, sizes);
 
 	/* diagonal, same diagonal generated for all */
+	// Arne morten, lurt å lage hele for hver prosess?
 	Real* diagonal = get_diagonal(m, n);
 
 	/* helper structure */
+	// Arne morten, lurt å lage denne 2d for openmp?
 	z = createReal2DArray(sizes[rank], nn);
 
 	/* allocate needed data structures */
@@ -141,11 +164,14 @@ poisson_parallel(int n, function2D f, function2D u)
 	/* calculate u_max */
 	Real sum;
 	Real u_max = 0.0;
+	// arne morten
+	//#pragma omp parallel for schedule(static) private(i, j, x, y)
 	for (i = 0; i < sizes[rank]; ++i) {
 		for (j = 0; j < m; ++j) {
 			x = (Real)(j + 1) / (Real)(n);
 			y = (Real)(i + offset + 1) / (Real)(n);
 			sum = fabs((*u)(x, y) - b_part[i][j]);
+			//#pragma omp critical
 			if (sum > u_max) {
 				u_max = sum;
 			}
@@ -236,32 +262,6 @@ poisson(int n, function2D f, function2D u)
 
 
 
-
-
-static void
-print2dArray(Real** arr, int rows, int cols)
-{
-	int i, j;
-	for(i = 0; i <rows; i++){
-		for(j = 0; j < cols; j++){
-			printf("%f   ", arr[i][j]);
-		}
-		printf("\n");
-	}
-}
-
-static void
-printArr(Real* arr, int size)
-{
-	int i;
-	for(i = 0; i < size; i++){
-		printf("%f   ", arr[i]);
-	}
-	printf("\n");
-}
-
-
-
 /*
  * Transpose function
  * Only rank 0 will have a valid result
@@ -347,6 +347,7 @@ Real *createRealArray (int n)
   Real *a;
   int i;
   a = (Real *)malloc(n*sizeof(Real));
+  #pragma omp parallel for schedule(static) private(i)
   for (i=0; i < n; i++) {
     a[i] = 0.0;
   }
@@ -360,6 +361,7 @@ Real
 	Real **a;
 	a    = (Real **)malloc(n1   *sizeof(Real *));
 	a[0] = (Real  *)malloc(n1*n2*sizeof(Real));
+	/* unable to openmp parallelize */
 	for (i=1; i < n1; i++) {
 	  a[i] = a[i-1] + n2;
 	}
@@ -405,6 +407,7 @@ int
 {
 	int i;
 	int* s_count = (int*)malloc(sizeof(int)*num_ranks);
+	#pragma omp parallel for schedule(static) private(i)
 	for(i = 0; i < num_ranks; i++){
 		s_count[i] = sizes[current_rank]*sizes[i];	
 	}
@@ -425,18 +428,21 @@ int
 }
 
 int*
-get_ownership(int num_rows, int num_ranks)
+get_ownership(int m, int* sizes, int num_ranks)
 {
-	int *ownership = malloc(sizeof(int) * num_rows);
-	int *sizes = create_SIZES(num_rows, num_ranks);
+	int *ownership = malloc(sizeof(int) * m);
 	
 	int rank, i;
 	rank = 0;
-	for (i = 0; i < num_rows; ++i) {
+	int c = sizes[0];
+	// diskutere denne
+	for (i = 0; i < m; ++i) {
 		ownership[i] = rank;
-		--sizes[rank];
-		if (sizes[rank] == 0)
+		--c;
+		if (c == 0){
 			++rank;
+			c = sizes[rank];
+		}
 	}
 
 	return ownership;
@@ -454,13 +460,14 @@ create_send_buffer(Real** b_part, int m, int *sizes, int rank, int num_ranks, in
 	Real* send_buf = createRealArray(send_buffer_size);
 	
 
-	int* column_ownership = get_ownership(m, num_ranks);
+	int* column_ownership = get_ownership(m, sizes, num_ranks);
 
 
 	int offsets[num_ranks];
+	#pragma omp parallel for schedule(static) private(i)
 	for(i = 0; i < num_ranks; ++i)
 		offsets[i] = 0;
-	
+	// Arne morten
 	for(i = 0; i < num_rows; i++){
 		for(j = 0; j < m; j++) {
 			/* get rank for current matric element */
@@ -478,6 +485,7 @@ reconstruct_partial_from_receive_buffer(Real** b_part, Real* receive_buffer, int
 	int i, row, col;
 	int current_row_num = sizes[rank];
 	int recv_buf_length = m * current_row_num;
+	#pragma omp parallel for schedule(static) private(i, row, col)
 	for(i = 0; i < recv_buf_length; i++){
 		row = i % current_row_num;
 		col = i / current_row_num;
@@ -490,6 +498,7 @@ get_offset(int current_rank, int *sizes)
 {
 	int offset, i;
 	offset = 0;
+	// Arne morten
 	for (i = 0; i < current_rank; ++i) {
 		offset += sizes[i];
 	}
