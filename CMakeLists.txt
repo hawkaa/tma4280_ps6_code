@@ -64,7 +64,7 @@ add_custom_target(test-mpi
 
 # Create the plot file
 add_custom_command(OUTPUT convergence_plot_data.tmp
-		COMMAND ./convergence > convergence_plot_data.tmp
+		COMMAND mpirun -np 8 convergence > convergence_plot_data.tmp
 		DEPENDS convergence
 		COMMENT "Needed to create plot data")
 
