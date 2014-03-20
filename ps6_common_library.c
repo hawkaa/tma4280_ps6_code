@@ -255,20 +255,8 @@ transpose_parallel(Real **bt, Real **b, int m)
 	} else{
 		MPI_Recv(&(b_part[0][0]), m*sizes[rank], MPI_DOUBLE, 0, 100, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 	}
-	//transpose_part(bt_part, b_part, m, sizes, rank, num_ranks);
 
-	/* kall til funksjon som antar at matrisen allerede er spredt */
-	int* s_count = create_Scount(rank, num_ranks, sizes);
-	int* s_displ = create_Sdispl(rank, num_ranks, sizes);
-
-	Real* send_buf = create_send_buffer(b_part, m, sizes, rank, num_ranks, s_displ, s_count);
-	Real* recv_buf = (Real*)malloc(sizeof(Real)*m*sizes[rank]);
-	
-	MPI_Alltoallv(send_buf, s_count, s_displ, MPI_DOUBLE, recv_buf, s_count, s_displ, MPI_DOUBLE, MPI_COMM_WORLD);
-
-	reconstruct_partial_from_receive_buffer(bt_part, recv_buf, m,
-					sizes, rank);
-
+	transpose_part(bt_part, b_part, m, sizes, rank, num_ranks);
 
 	/* samle sammen på p0 og returner */
   	if(rank == 0){	
