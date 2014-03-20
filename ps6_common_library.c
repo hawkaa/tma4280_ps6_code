@@ -32,7 +32,6 @@ poisson(int n, function2D f)
 
 	Real **b_part, **bt_part, *diag;
 	int m, nn;
-	int i;
 	int* sizes;
 	Real h, pi;
 
@@ -47,8 +46,8 @@ poisson(int n, function2D f)
 	diag = createRealArray(sizes[rank]);
 
 	/* alloc partial matrices */
-	b_part = createReal2DArray(sizes[rank], m);
-	bt_part = createReal2DArray(sizes[rank], m);
+	b_part = createRealArray(sizes[rank], m);
+	bt_part = createRealArray(sizes[rank], m);
 	
 	/* reference values */
 	h = 1.0 / (Real)n;
@@ -59,18 +58,17 @@ poisson(int n, function2D f)
 		diag[i] = 2.0 * (1.0 - cos((i + 1) * pi / (Real)n));
 	}
 
-	return 0.1;
-	/*	
+	return 0;
+	
 	Real *diag, **b, **bt, *z;
 	Real pi, h, umax;
-	int i, j, n, m, nn; */
+	int i, j, n, m, nn;
 
 	
 	/* the total number of grid points in each spatial direction is (n+1) */
 	/* the total number of degrees-of-freedom in each spatial direction is (n-1) */
 	/* this version requires n to be a power of 2 */
-
-	/*
+	
 	n = problem_size;
 	m = n - 1;
 	nn = 4 * n;
@@ -102,14 +100,16 @@ poisson(int n, function2D f)
 	
 	for (i=0; i < m; i++) {
 	  fstinv_(bt[i], &n, z, &nn);
-	} 
+	}
 
+	/* step 2 */
 	for (j=0; j < m; j++) {
 	  for (i=0; i < m; i++) {
 	    bt[j][i] = bt[j][i]/(diag[i]+diag[j]);
 	  }
 	}
 
+	/* step 3 */
 	for (i=0; i < m; i++) {
 	  fst_(bt[i], &n, z, &nn);
 	}
@@ -120,7 +120,6 @@ poisson(int n, function2D f)
 	  fstinv_(b[j], &n, z, &nn);
 	}
 	
-	*/
 	//return b;
 
 }
