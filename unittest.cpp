@@ -85,7 +85,7 @@ class Matrix7x7 : public Matrix {
 
 TEST_F(Matrix3x3, get_ownership)
 {
-	int *owneship_output = get_ownership(m, num_ranks);
+	int *owneship_output = get_ownership(m, sizes, num_ranks);
 	for (int i = 0; i < m; ++i) {
 		ASSERT_EQ(ownership[i], owneship_output[i]);
 	}
@@ -93,7 +93,7 @@ TEST_F(Matrix3x3, get_ownership)
 
 TEST_F(Matrix7x7, get_ownership)
 {
-	int *owneship_output = get_ownership(m, num_ranks);
+	int *owneship_output = get_ownership(m, sizes, num_ranks);
 	for (int i = 0; i < m; ++i) {
 		ASSERT_EQ(ownership[i], owneship_output[i]);
 	}
