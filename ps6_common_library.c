@@ -18,52 +18,13 @@
  * Only rank 0 will have valid result
  */
 Real
-poisson(int n, function2D f)
+poisson(int problem_size, function2D f)
 {
-	int rank, size;
-	#ifdef HAVE_MPI
-	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-	MPI_Comm_size(MPI_COMM_WORLD, &size);
-	#else
-	rank = 0;
-	size = 1;
-	#endif
-
-
-	Real **b_part, **bt_part, *diag;
-	int m, nn;
-	int* sizes;
-	Real h, pi;
-
-
-	nn = n * 4;
-	m = n - 1;
-
-	/* sizes array */
-	sizes = create_SIZES(m, size);
-	
-	/* alloc diagonal */
-	diag = createRealArray(sizes[rank]);
-
-	/* alloc partial matrices */
-	b_part = createRealArray(sizes[rank], m);
-	bt_part = createRealArray(sizes[rank], m);
-	
-	/* reference values */
-	h = 1.0 / (Real)n;
-	pi = 4.0 * atan(1.0);
-	
-	/* fill in diagonal values */
-	for (i=0; i < m; i++) {
-		diag[i] = 2.0 * (1.0 - cos((i + 1) * pi / (Real)n));
-	}
-
-	return 0;
-	
 	Real *diag, **b, **bt, *z;
 	Real pi, h, umax;
 	int i, j, n, m, nn;
 
+	return 0.1;
 	
 	/* the total number of grid points in each spatial direction is (n+1) */
 	/* the total number of degrees-of-freedom in each spatial direction is (n-1) */
