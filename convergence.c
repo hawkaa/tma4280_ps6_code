@@ -11,7 +11,7 @@
 
 /* constants */
 #define N_MIN 3
-#define N_MAX 11
+#define N_MAX 10
 
 Real
 f(Real x, Real y)
@@ -69,7 +69,7 @@ main(int argc, char** argv)
 
 	for (i = N_MIN; i <= N_MAX; ++i) {
 		j = pow(2, i);
-		umax = poisson(j, *f, *u);
+		umax = poisson(j, *f);
 		if (rank == 0) {
 			printf("%i\t%.16e\n", j, umax);
 		}
