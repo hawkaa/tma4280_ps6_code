@@ -47,7 +47,58 @@ get_diagonal(m, n)
 	return d;
 }
 
+/*
+ * Poisson solver.
+ * Will return max error
+ * Should be called from all processes
+ * Only rank 0 will have valid result
+ */
+Real
+poisson_parallel(int n, function2D f, function2D u)
+{
+	
+	/* vector and matrix structures */
+	Real *z;
 
+	int m;
+	int i, j;
+	Real x, y;
+	m = n - 1;
+
+
+	/* mpi */
+	int rank, num_ranks;
+	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+	MPI_Comm_size(MPI_COMM_WORLD, &num_ranks);
+
+	/* reference values */
+	Real h = 1.0 / (Real)n;
+
+
+	/* "shared" variables */
+	int *sizes = create_SIZES(m, num_ranks);
+
+	/* "local" variables */
+	int offset = get_offset(rank, sizes);
+
+	/* diagonal, same diagonal generated for all */
+	Real* diagonal = get_diagonal(m, n);
+
+	/* allocate needed data structures */
+	Real **b_part = createReal2DArray(sizes[rank], m);
+	Real **bt_part = createReal2DArray(sizes[rank], m);
+
+	
+	for (i = 0; i < sizes[rank]; ++i) {
+		printf("[Rank %i] Global %i, Local %i\n", rank, offset + i, i);
+		for (j = 0; j < m; ++j) {
+			x = (Real)(j+1) / (Real)(n);
+			y = (Real)(offset + i + 1) / (Real)(n);
+			b_part[i][j] = h * h * (*f)(x, y);
+		}
+	}
+	return 0.1;
+}
 /*
  * Poisson solver.
  * Will return max error

@@ -265,6 +265,15 @@ TEST(get_offset, p2)
 	ASSERT_EQ(1, get_offset(1, s));
 }
 
+TEST(get_offset, Even)
+{
+	int s[4] = {2, 2, 2, 2};
+	ASSERT_EQ(0, get_offset(0, s));
+	ASSERT_EQ(2, get_offset(1, s));
+	ASSERT_EQ(4, get_offset(2, s));
+	ASSERT_EQ(6, get_offset(3, s));
+}
+
 TEST(get_offset, p3)
 {
 	int s[3] = {3, 4, 4};
@@ -272,6 +281,17 @@ TEST(get_offset, p3)
 	ASSERT_EQ(3, get_offset(1, s));
 	ASSERT_EQ(7, get_offset(2, s));
 }
+
+TEST(get_offest, combined)
+{
+	int *s = create_SIZES(8, 4);
+	ASSERT_EQ(0, get_offset(0, s));
+	ASSERT_EQ(2, get_offset(1, s));
+	ASSERT_EQ(4, get_offset(2, s));
+	ASSERT_EQ(6, get_offset(3, s));
+
+}
+
 
 int
 main(int argc, char** argv)
