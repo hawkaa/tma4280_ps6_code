@@ -32,27 +32,6 @@ printArr(Real* arr, int size)
 	printf("\n");
 }
 
-static Real
-get_umax(Real **b, int n, function2D u)
-{
-	int i, j;
-	Real umax, sum;
-	Real x, y;
-	umax = 0.0;
-	for (i = 1; i < n; ++i) {
-		for (j = 1; j < n; ++j) {
-			x = (Real)(j) / (Real)(n);
-			y = (Real)(i) / (Real)(n);
-			sum = fabs((*u)(x, y) - b[i-1][j-1]);
-			if (sum > umax) {
-				umax = sum;
-			}
-		}
-	}
-	return umax;
-
-}
-
 Real*
 get_diagonal(m, n)
 {
@@ -80,13 +59,11 @@ poisson_parallel(int n, function2D f, function2D u)
 {
 	
 	/* vector and matrix structures */
-	Real **z;
 
-	int m, nn;
 	int i, j;
 	Real x, y;
-	m = n - 1;
-	nn = 4 * n;
+	int m = n - 1;
+	int nn = 4 * n;
 
 
 	/* mpi */
@@ -98,19 +75,21 @@ poisson_parallel(int n, function2D f, function2D u)
 	Real h = 1.0 / (Real)n;
 
 
-	/* "shared" variables */
+	/* "shared" variables (equal on all ranks) */
 	int *sizes = create_SIZES(m, num_ranks);
+	int *s_displ = create_Sdispl(rank, num_ranks, sizes);
+	int *s_count = create_Scount(rank, num_ranks, sizes);
 
-	/* "local" variables */
+	/* "local" variables (will have different values on diffrent ranks) */
 	int offset = get_offset(rank, sizes);
 
 	/* diagonal, same diagonal generated for all */
 	// Arne morten, lurt å lage hele for hver prosess?
 	Real* diagonal = get_diagonal(m, n);
 
-	/* helper structure */
+	/* helper structure for fst */
 	// Arne morten, lurt å lage denne 2d for openmp?
-	z = createReal2DArray(sizes[rank], nn);
+	Real** z = createReal2DArray(sizes[rank], nn);
 
 	/* allocate needed data structures */
 	Real **b_part = createReal2DArray(sizes[rank], m);
@@ -133,7 +112,7 @@ poisson_parallel(int n, function2D f, function2D u)
 		fst_(b_part[i], &n, z[i], &nn);
 	}
 	
-	transpose_part(bt_part, b_part, m, sizes, rank, num_ranks);
+	transpose_part(bt_part, b_part, m, sizes, rank, num_ranks, s_displ, s_count);
 		
 	#pragma omp parallel for schedule(static) private(i) 
 	for (i = 0; i < sizes[rank]; ++i) {
@@ -154,7 +133,7 @@ poisson_parallel(int n, function2D f, function2D u)
 		fst_(bt_part[i], &n, z[i], &nn);
 	}
 	
-	transpose_part(b_part, bt_part, m, sizes, rank, num_ranks);
+	transpose_part(b_part, bt_part, m, sizes, rank, num_ranks, s_displ, s_count);
 	
 	#pragma omp parallel for schedule(static) private(i) 
 	for (i = 0; i < sizes[rank]; ++i) {
@@ -177,9 +156,19 @@ poisson_parallel(int n, function2D f, function2D u)
 			}
 		}
 	}
-	Real u_max_rank_0;
+	Real u_max_rank_0 = -1;
 
 	MPI_Reduce(&u_max, &u_max_rank_0, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
+	
+	/* clean up */
+	freeReal2DArray(b_part, sizes[rank]);
+	freeReal2DArray(bt_part, sizes[rank]);
+	freeReal2DArray(z, sizes[rank]);
+	free(sizes);
+	free(diagonal);
+	free(s_count);
+	free(s_displ);
+
 	return u_max_rank_0;
 }
 /*
@@ -256,8 +245,26 @@ poisson(int n, function2D f, function2D u)
 	for (i = 0; i < m; ++i) {
 		fstinv_(b[i], &n, z, &nn);
 	}
+
+	Real sum;
+	umax = 0.0;
+	for (i = 1; i < n; ++i) {
+		for (j = 1; j < n; ++j) {
+			x = (Real)(j) / (Real)(n);
+			y = (Real)(i) / (Real)(n);
+			sum = fabs((*u)(x, y) - b[i-1][j-1]);
+			if (sum > umax) {
+				umax = sum;
+			}
+		}
+	}
+
+	freeReal2DArray(b, m);
+	freeReal2DArray(bt, m);
+	free(diagonal);
+	free(z);
 		
-	return get_umax(b, n, u);
+	return umax;
 }
 
 
@@ -268,10 +275,8 @@ poisson(int n, function2D f, function2D u)
  */
 
 void
-transpose_part(Real **bt_part, Real **b_part, int m, int *sizes, int rank, int num_ranks)
+transpose_part(Real **bt_part, Real **b_part, int m, int *sizes, int rank, int num_ranks, int* s_displ, int* s_count)
 {
-	int* s_count = create_Scount(rank, num_ranks, sizes);
-	int* s_displ = create_Sdispl(rank, num_ranks, sizes);
 
 	Real* send_buf = create_send_buffer(b_part, m, sizes, rank, num_ranks,
 					s_displ, s_count);
@@ -283,6 +288,8 @@ transpose_part(Real **bt_part, Real **b_part, int m, int *sizes, int rank, int n
 
 	reconstruct_partial_from_receive_buffer(bt_part, recv_buf, m,
 					sizes, rank);
+	free(send_buf);
+	free(recv_buf);
 		
 }
 void
@@ -296,7 +303,9 @@ transpose_parallel(Real **bt, Real **b, int m)
 	MPI_Comm_size(MPI_COMM_WORLD, &num_ranks);
 	
 	int* sizes = create_SIZES(m, num_ranks);
-	
+	int* s_displ = create_Sdispl(rank, num_ranks, sizes);
+	int* s_count = create_Scount(rank, num_ranks, sizes);
+
 	/* allocate partial matrices */
 	Real** b_part = createReal2DArray(sizes[rank], m);
 	Real** bt_part = createReal2DArray(sizes[rank], m);
@@ -313,7 +322,7 @@ transpose_parallel(Real **bt, Real **b, int m)
 		MPI_Recv(&(b_part[0][0]), m*sizes[rank], MPI_DOUBLE, 0, 100, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 	}
 
-	transpose_part(bt_part, b_part, m, sizes, rank, num_ranks);
+	transpose_part(bt_part, b_part, m, sizes, rank, num_ranks, s_displ, s_count);
 
 	/* samle sammen på p0 og returner */
   	if(rank == 0){	
@@ -324,7 +333,15 @@ transpose_parallel(Real **bt, Real **b, int m)
 		memcpy(bt[0], bt_part[0], sizeof(Real) * m * sizes[0]);
 	} else{
 		MPI_Send(&(bt_part[0][0]), m*sizes[rank], MPI_DOUBLE, 0 , 100, MPI_COMM_WORLD);
-	}	
+	}
+	
+	/* clean up */
+	freeReal2DArray(b_part, sizes[rank]);
+	freeReal2DArray(bt_part, sizes[rank]);
+	free(sizes);
+	free(s_count);
+	free(s_displ);
+	
 	#else
 	transpose(bt, b, m);
 	#endif
@@ -368,6 +385,13 @@ Real
 	n = n1*n2;
 	memset(a[0],0,n*sizeof(Real));
 	return (a);
+}
+
+void 
+freeReal2DArray(Real** arr, int m)
+{
+	free(arr[0]);
+	free(arr);
 }
 
 /*  */
@@ -459,7 +483,7 @@ create_send_buffer(Real** b_part, int m, int *sizes, int rank, int num_ranks, in
 	int inner_rank;
 	Real* send_buf = createRealArray(send_buffer_size);
 	
-
+	// Arne morten
 	int* column_ownership = get_ownership(m, sizes, num_ranks);
 
 
@@ -476,10 +500,11 @@ create_send_buffer(Real** b_part, int m, int *sizes, int rank, int num_ranks, in
 			send_buf[base] = b_part[i][j];
 		}		
 	}
+	free(column_ownership);
 	return send_buf;	
 }
 
-Real**
+void
 reconstruct_partial_from_receive_buffer(Real** b_part, Real* receive_buffer, int m, int *sizes, int rank)
 {
 	int i, row, col;
