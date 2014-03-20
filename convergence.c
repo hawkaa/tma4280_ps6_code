@@ -45,6 +45,7 @@ int
 main(int argc, char** argv)
 {
 	/* get rank variable */
+
 	int rank;
 	#ifdef HAVE_MPI
 	MPI_Init(&argc, &argv);
@@ -55,6 +56,7 @@ main(int argc, char** argv)
 
 	/* u_max variable */
 	Real u_max;
+	int j, i;
 
 	/* header data for gnuplot output */
 	if (rank == 0) {
@@ -65,10 +67,10 @@ main(int argc, char** argv)
 	/* iterating over different problem sizes */
 	for (i = N_MIN; i <= N_MAX; ++i) {
 		j = pow(2, i);
-		umax = poisson_parallel(j, *f, *u);
+		u_max = poisson_parallel(j, *f, *u);
 		if (rank == 0) {
 			/* only rank 0 have valid result, and will print to file */
-			printf("%i\t%.16e\n", j, umax);
+			printf("%i\t%.16e\n", j, u_max);
 		}
 	}
 
