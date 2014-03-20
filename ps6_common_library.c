@@ -31,6 +31,22 @@ get_umax(Real **b, int n, function2D u)
 
 }
 
+Real*
+get_diagonal(m, n)
+{
+	int i;
+	Real pi;
+	Real *d;
+	
+	pi = 4.0 * atan(1.0);
+
+	d = createRealArray(m);
+	for (i = 0; i < m; ++i) {
+		d[i] = 2.0 * (1.0 - cos((i + 1) * pi / (Real)n));
+	}
+	return d;
+}
+
 
 /*
  * Poisson solver.
@@ -39,73 +55,80 @@ get_umax(Real **b, int n, function2D u)
  * Only rank 0 will have valid result
  */
 Real
-poisson(int problem_size, function2D f, function2D u)
+poisson(int n, function2D f, function2D u)
 {
-	Real *diag, **b, **bt, *z;
-	Real pi, h, umax;
-	int i, j, n, m, nn;
+	
+	/* vector and matrix structures */
+	Real *diagonal;
+	Real **b;
+	Real **bt;
+	Real *z;
+	
 
+	Real pi, h, umax;
+	int i, j,  m, nn;
+
+	
+	Real x, y;
 	
 	/* the total number of grid points in each spatial direction is (n+1) */
 	/* the total number of degrees-of-freedom in each spatial direction is (n-1) */
 	/* this version requires n to be a power of 2 */
 	
-	n = problem_size;
 	m = n - 1;
 	nn = 4 * n;
 	
-	diag = createRealArray (m);
 	b = createReal2DArray (m,m);
 	bt = createReal2DArray (m,m);
 	z = createRealArray (nn);
 	
+
 	h = 1.0 / (Real)n;
-	pi = 4.0 * atan(1.0);
 	
-	for (i=0; i < m; i++) {
-		diag[i] = 2.0 * (1.0 - cos((i + 1) * pi / (Real)n));
-	}
-	Real x, y;
-	for (j=0; j < m; j++) {
-		for (i=0; i < m; i++) {
-			x = (Real)(i+1) / (Real)(n);
-			y = (Real)(j+1) / (Real)(n);
-			b[j][i] = h * h * (*f)(x, y);
+	diagonal = get_diagonal(m, n);
+
+	for (i = 0; i < m; ++i) {
+		for (j = 0; j < m; ++j) {
+			x = (Real)(j+1) / (Real)(n);
+			y = (Real)(i+1) / (Real)(n);
+			b[i][j] = h * h * (*f)(x, y);
 		}
 	}
-	for (j=0; j < m; j++) {
-		fst_(b[j], &n, z, &nn);
+
+	for (i = 0; i < m; ++i) {
+		fst_(b[i], &n, z, &nn);
 	}
 	
 	transpose(bt, b, m);
 	
-	for (i=0; i < m; i++) {
-	  fstinv_(bt[i], &n, z, &nn);
+	for (i = 0; i < m; ++i) {
+		fstinv_(bt[i], &n, z, &nn);
 	}
 
 	/* step 2 */
-	for (j=0; j < m; j++) {
-	  for (i=0; i < m; i++) {
-	    bt[j][i] = bt[j][i]/(diag[i]+diag[j]);
-	  }
+	for (i = 0; i < m; ++i) {
+		for (j = 0; j < m; ++j) {
+			bt[i][j] = bt[i][j]/(diagonal[i]+diagonal[j]);
+		}
 	}
 
 	/* step 3 */
-	for (i=0; i < m; i++) {
-	  fst_(bt[i], &n, z, &nn);
+	for (i = 0; i < m; ++i) {
+		fst_(bt[i], &n, z, &nn);
 	}
 	
-	transpose (b,bt,m);
+	transpose (b, bt, m);
 	
-	for (j=0; j < m; j++) {
-	  fstinv_(b[j], &n, z, &nn);
+	for (i = 0; i < m; ++i) {
+		fstinv_(b[i], &n, z, &nn);
 	}
 	
 	return get_umax(b, n, u);
-	return 0.1;
-	//return b;
-
 }
+
+
+
+
 
 static void
 print2dArray(Real** arr, int rows, int cols)
@@ -162,7 +185,7 @@ transpose(Real **bt, Real **b, int m)
 
 	Real* send_buf = create_Send_buf(b_partial, rank, size, sizes, m, s_displ, s_count);
 	Real* recv_buf = (Real*)malloc(sizeof(Real)*m*sizes[rank]);
-
+	
 	MPI_Alltoallv(send_buf, s_count, s_displ, MPI_DOUBLE, recv_buf, s_count, s_displ, MPI_DOUBLE, MPI_COMM_WORLD);
 	
 	Real** partial_trans = create_partial_transposed(recv_buf, m, rank, sizes);
