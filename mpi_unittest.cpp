@@ -23,7 +23,7 @@ TEST(Transpose, HardCoded)
 	b[1][0] = 3.0;
 	b[1][1] = 4.0;
 	
-	transpose(bt, b, 2);
+	transpose_parallel(bt, b, 2);
 	if (rank != 0)
 		return;
 	ASSERT_FLOAT_EQ(bt[0][0], 1.0);
@@ -50,7 +50,7 @@ TEST(Transpose, Looped)
 		}
 	}
 
-	transpose(bt, b, matrix_size);
+	transpose_parallel(bt, b, matrix_size);
 
 	if (rank != 0)
 		return;

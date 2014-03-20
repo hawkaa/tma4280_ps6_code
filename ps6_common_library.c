@@ -209,59 +209,92 @@ printArr(Real* arr, int size)
  * Transpose function
  * Only rank 0 will have a valid result
  */
+
 void
-transpose(Real **bt, Real **b, int m)
+transpose_part(Real **bt_part, Real **b_part, int m, int *sizes, int rank, int num_ranks)
+{
+	int* s_count = create_Scount(rank, num_ranks, sizes);
+	int* s_displ = create_Sdispl(rank, num_ranks, sizes);
+
+	Real* send_buf = create_send_buffer(b_part, m, sizes, rank, num_ranks,
+					s_displ, s_count);
+
+	Real* recv_buf = (Real*)malloc(sizeof(Real) * m * sizes[rank]);
+	
+	MPI_Alltoallv(send_buf, s_count, s_displ, MPI_DOUBLE, recv_buf, 
+				s_count, s_displ, MPI_DOUBLE, MPI_COMM_WORLD);
+
+	reconstruct_partial_from_receive_buffer(bt_part, recv_buf, m,
+					sizes, rank);
+		
+}
+void
+transpose_parallel(Real **bt, Real **b, int m)
 {
 	#ifdef HAVE_MPI
 	/* spre ut matrise på alle prosesser */
-	int rank, size;
+
+	int rank, num_ranks;	
 	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-	MPI_Comm_size(MPI_COMM_WORLD, &size);
-	int* sizes = create_SIZES(m, size);
-	Real** b_partial = createReal2DArray(sizes[rank], m);
+	MPI_Comm_size(MPI_COMM_WORLD, &num_ranks);
+	
+	int* sizes = create_SIZES(m, num_ranks);
+	
+	/* allocate partial matrices */
+	Real** b_part = createReal2DArray(sizes[rank], m);
+	Real** bt_part = createReal2DArray(sizes[rank], m);
+
+	/* distribute */
 	if(rank == 0){	
 		int i;
-		for(i = 1; i < size; i++){
-			b_partial = get_matrix_rows(b, m, i, sizes);
-			MPI_Send(&(b_partial[0][0]), m*sizes[i], MPI_DOUBLE, i , 100, MPI_COMM_WORLD);
+		for(i = 1; i < num_ranks; ++i){
+			b_part = get_matrix_rows(b, m, i, sizes);
+			MPI_Send(&(b_part[0][0]), m*sizes[i], MPI_DOUBLE, i , 100, MPI_COMM_WORLD);
 		}
-		b_partial = get_matrix_rows(b, m , 0, sizes);
+		b_part = get_matrix_rows(b, m , 0, sizes);
 	} else{
-		MPI_Recv(&(b_partial[0][0]), m*sizes[rank], MPI_DOUBLE, 0, 100, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-	}	
+		MPI_Recv(&(b_part[0][0]), m*sizes[rank], MPI_DOUBLE, 0, 100, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+	}
+	//transpose_part(bt_part, b_part, m, sizes, rank, num_ranks);
 
 	/* kall til funksjon som antar at matrisen allerede er spredt */
-	int* s_count = create_Scount(rank, size, sizes);
-	int* s_displ = create_Sdispl(rank, size, sizes);
+	int* s_count = create_Scount(rank, num_ranks, sizes);
+	int* s_displ = create_Sdispl(rank, num_ranks, sizes);
 
-	Real* send_buf = create_Send_buf(b_partial, rank, size, sizes, m, s_displ, s_count);
+	Real* send_buf = create_send_buffer(b_part, m, sizes, rank, num_ranks, s_displ, s_count);
 	Real* recv_buf = (Real*)malloc(sizeof(Real)*m*sizes[rank]);
 	
 	MPI_Alltoallv(send_buf, s_count, s_displ, MPI_DOUBLE, recv_buf, s_count, s_displ, MPI_DOUBLE, MPI_COMM_WORLD);
-	
-	Real** partial_trans = create_partial_transposed(recv_buf, m, rank, sizes);
 
-	//if(rank == 0) print2dArray(partial_trans, sizes[rank], m);		
+	reconstruct_partial_from_receive_buffer(bt_part, recv_buf, m,
+					sizes, rank);
+
 
 	/* samle sammen på p0 og returner */
   	if(rank == 0){	
 		int i;
-		for(i = 1; i < size; i++){
+		for(i = 1; i < num_ranks; i++){
 			MPI_Recv(&(bt[get_offset(i, sizes)][0]), m*sizes[i], MPI_DOUBLE, i, 100, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 		}
-		memcpy(bt[0], partial_trans[0], sizeof(Real) * m * sizes[0]);
+		memcpy(bt[0], bt_part[0], sizeof(Real) * m * sizes[0]);
 	} else{
-		MPI_Send(&(partial_trans[0][0]), m*sizes[rank], MPI_DOUBLE, 0 , 100, MPI_COMM_WORLD);
+		MPI_Send(&(bt_part[0][0]), m*sizes[rank], MPI_DOUBLE, 0 , 100, MPI_COMM_WORLD);
 	}	
-
 	#else
+	transpose(bt, b, m);
+	#endif
+}
+
+void
+transpose(Real **bt, Real **b, int m)
+{
 	int i, j;
-  	for (j=0; j < m; j++) {
-    		for (i=0; i < m; i++) {
-      			bt[j][i] = b[i][j];
+  	for (i = 0; i < m; ++i) {
+    		for (j = 0; j < m; ++j) {
+      			bt[i][j] = b[j][i];
     		}
   	}
-	#endif
+
 }
 
 Real *createRealArray (int n)
@@ -365,14 +398,14 @@ get_ownership(int num_rows, int num_ranks)
 }
 
 Real*
-create_Send_buf(Real** owned_rows, int current_rank, int num_ranks, int* sizes, int m, int* s_displ, int* s_count)
+create_send_buffer(Real** b_part, int m, int *sizes, int rank, int num_ranks, int* s_displ, int* s_count)
 {
 	int i, j;
 	int index = 0;
-	int num_rows = sizes[current_rank];
-	int send_buffer_size = m*num_rows;
+	int num_rows = sizes[rank];
+	int send_buffer_size = m * num_rows;
 	int base;
-	int rank;
+	int inner_rank;
 	Real* send_buf = createRealArray(send_buffer_size);
 	
 
@@ -386,27 +419,25 @@ create_Send_buf(Real** owned_rows, int current_rank, int num_ranks, int* sizes, 
 	for(i = 0; i < num_rows; i++){
 		for(j = 0; j < m; j++) {
 			/* get rank for current matric element */
-			rank = column_ownership[j];
-			base = s_displ[rank] + (offsets[rank]++);
-			send_buf[base] = owned_rows[i][j];
+			inner_rank = column_ownership[j];
+			base = s_displ[inner_rank] + (offsets[inner_rank]++);
+			send_buf[base] = b_part[i][j];
 		}		
 	}
 	return send_buf;	
 }
 
 Real**
-create_partial_transposed(Real* recv_buf, int m, int current_rank, int* sizes)
+reconstruct_partial_from_receive_buffer(Real** b_part, Real* receive_buffer, int m, int *sizes, int rank)
 {
 	int i, row, col;
-	int current_row_num = sizes[current_rank];
-	int recv_buf_length = m*current_row_num;
-	Real** bt_partial = createReal2DArray(current_row_num, m);
+	int current_row_num = sizes[rank];
+	int recv_buf_length = m * current_row_num;
 	for(i = 0; i < recv_buf_length; i++){
 		row = i % current_row_num;
 		col = i / current_row_num;
-		bt_partial[row][col] = recv_buf[i];
+		b_part[row][col] = receive_buffer[i];
 	}
-	return bt_partial;
 }
 
 int

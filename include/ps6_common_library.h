@@ -26,6 +26,11 @@ poisson_parallel(int problem_size, function2D f, function2D u);
 extern Real
 poisson(int problem_size, function2D f, function2D u);
 
+extern void
+transpose(Real **bt, Real **b, int m);
+
+extern void
+transpose_parallel(Real **bt, Real **b, int m);
 
 extern Real
 *createRealArray(int n);
@@ -33,8 +38,6 @@ extern Real
 extern Real
 **createReal2DArray(int m, int n);
 
-extern void
-transpose(Real **bt, Real **b, int m);
 
 extern int* 
 create_SIZES(int num_rows, int num_ranks);
@@ -46,10 +49,10 @@ extern int*
 create_Sdispl(int current_rank, int num_ranks, int* sizes);
 
 extern Real*
-create_Send_buf(Real** owned_rows, int current_rank, int num_ranks, int* sizes, int m, int* s_displ, int* s_count);
+create_send_buffer(Real** b_part, int m, int *sizes, int rank, int num_ranks, int* s_displ, int* s_count);
 
 extern Real**
-create_partial_transposed(Real* recv_buf, int m, int current_rank, int* sizes);
+reconstruct_partial_from_receive_buffer(Real** b_part, Real* receive_buffer, int m, int *sizes, int rank);
 
 extern Real**
 get_matrix_rows(Real** b, int m, int current_rank,  int *sizes);
