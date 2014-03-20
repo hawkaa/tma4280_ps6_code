@@ -91,7 +91,7 @@ main(int argc, char** argv)
 		umax = poisson_parallel(n, f ,u);	
 		t2 = WallTime();
 		if(rank == 0){
-			printf("run %d, time=%f, umax=%.10f\n", i, t2-t1, umax);
+			printf("run %d, time=%.15e, umax=%.15e\n", i, t2-t1, umax);
 			wtimes[i] = t2- t1;
 		}
 	}
@@ -110,9 +110,7 @@ main(int argc, char** argv)
 			sum += wtimes[i];
 		}
 		sum = sum - max - min;
-		printf("min: %f\n", min);
-		printf("max: %f\n", max);
-		printf("average time: %f\n", sum/(num_of_runs-2));
+		printf("average time: %.15e\n", sum/(num_of_runs-2));
 	}
 	
 	#ifdef HAVE_MPI
