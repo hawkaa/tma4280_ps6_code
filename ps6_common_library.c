@@ -9,8 +9,27 @@
 /*local includes */
 #include "ps6_common_library.h"
 
+static void
+print2dArray(Real** arr, int rows, int cols)
+{
+	int i, j;
+	for(i = 0; i <rows; i++){
+		for(j = 0; j < cols; j++){
+			printf("%f   ", arr[i][j]);
+		}
+		printf("\n");
+	}
+}
 
-
+static void
+printArr(Real* arr, int size)
+{
+	int i;
+	for(i = 0; i < size; i++){
+		printf("%f   ", arr[i]);
+	}
+	printf("\n");
+}
 /*
  * Poisson solver.
  * Will return max error
@@ -69,22 +88,22 @@ poisson(int n, function2D f, function2D u)
 	for (i = 0; i < sizes[rank]; ++i) {
 		for (j = 0; j < m; ++j) {
 			x = (Real)(j + 1) / (Real)(n);
-			y = (Real)(offset + i + 1) / (Real)(n);
+			y = (Real)(offset + i) / (Real)(n);
 			b_part[i][j] = h * h * (*f)(x, y);
 		}
 	}
 	
+		
 	for (i = 0; i < sizes[rank]; ++i) {
 		fst_(b_part[i], &n, z, &nn);
 	}
 	
 	s_count = create_Scount(rank, size, sizes);
 	s_displ = create_Sdispl(rank, size, sizes);
-
+	
 	/* transpose */
 	transpose_part(bt_part, b_part, m, sizes, rank, size, s_count, s_displ);
-	
-	
+
 	for (i = 0; i < sizes[rank]; ++i) {
 		fstinv_(bt_part[i], &n, z, &nn);
 	} 
@@ -190,28 +209,6 @@ poisson(int n, function2D f, function2D u)
 	*/
 	//return b;
 
-}
-
-static void
-print2dArray(Real** arr, int rows, int cols)
-{
-	int i, j;
-	for(i = 0; i <rows; i++){
-		for(j = 0; j < cols; j++){
-			printf("%f   ", arr[i][j]);
-		}
-		printf("\n");
-	}
-}
-
-static void
-printArr(Real* arr, int size)
-{
-	int i;
-	for(i = 0; i < size; i++){
-		printf("%f   ", arr[i]);
-	}
-	printf("\n");
 }
 
 void
