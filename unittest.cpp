@@ -100,8 +100,58 @@ TEST_F(Matrix7x7, get_ownership)
 }
 
 
+TEST(transpose, HardCoded)
+{
+	Real **b, **bt;
+	b = createReal2DArray(2, 2);
+	bt = createReal2DArray(2, 2);
+	b[0][0] = 1.0;
+	b[0][1] = 2.0;
+	b[1][0] = 3.0;
+	b[1][1] = 4.0;
+	
+	transpose(bt, b, 2);
+	ASSERT_FLOAT_EQ(bt[0][0], 1.0);
+	ASSERT_FLOAT_EQ(bt[0][1], 3.0);
+	ASSERT_FLOAT_EQ(bt[1][0], 2.0);
+	ASSERT_FLOAT_EQ(bt[1][1], 4.0);
+}
 
-TEST(create_Send_buf, test1)
+TEST(transpose, Looped)
+{
+	
+	int matrix_size;
+
+	int counter, i, j;
+	matrix_size = 100;
+	Real **b, **bt;
+	b = createReal2DArray(matrix_size, matrix_size);
+	bt = createReal2DArray(matrix_size, matrix_size);
+
+	counter = 1;
+	for (i = 0; i < matrix_size; ++i) {
+		for  (j = 0; j < matrix_size; ++j) {
+			b[i][j] = counter++;
+		}
+	}
+
+	transpose(bt, b, matrix_size);
+
+
+	for (i = 0; i < matrix_size; ++i) {
+		for  (j = 0; j < matrix_size; ++j) {
+			ASSERT_FLOAT_EQ(bt[j][i], b[i][j]);
+		}
+
+	}
+
+}
+
+/*
+ * create_send_buffer
+ */
+
+TEST(create_send_buffer, test1)
 {
 	int i, j;
 	Real **b;
@@ -114,14 +164,15 @@ TEST(create_Send_buf, test1)
 			value++;	
 		}
 	}
+	/* check if correctly filled out */
 	ASSERT_FLOAT_EQ(3.0, b[0][2]);
 	ASSERT_FLOAT_EQ(8.0, b[1][0]);
+
 	int s[3] = {2,2,3};
-	
 	int *sC = create_Scount(0, 3, s);
 	int *sD = create_Sdispl(0, 3, s);
 	
-	send_buf = create_Send_buf(b, 0, 3, s, 7, sD, sC);
+	send_buf = create_send_buffer(b, 7, s, 0, 3, sD, sC);
 	ASSERT_FLOAT_EQ(1, send_buf[0]);
 	ASSERT_FLOAT_EQ(2, send_buf[1]);
 	ASSERT_FLOAT_EQ(8, send_buf[2]);
@@ -265,6 +316,15 @@ TEST(get_offset, p2)
 	ASSERT_EQ(1, get_offset(1, s));
 }
 
+TEST(get_offset, Even)
+{
+	int s[4] = {2, 2, 2, 2};
+	ASSERT_EQ(0, get_offset(0, s));
+	ASSERT_EQ(2, get_offset(1, s));
+	ASSERT_EQ(4, get_offset(2, s));
+	ASSERT_EQ(6, get_offset(3, s));
+}
+
 TEST(get_offset, p3)
 {
 	int s[3] = {3, 4, 4};
@@ -272,6 +332,17 @@ TEST(get_offset, p3)
 	ASSERT_EQ(3, get_offset(1, s));
 	ASSERT_EQ(7, get_offset(2, s));
 }
+
+TEST(get_offest, combined)
+{
+	int *s = create_SIZES(8, 4);
+	ASSERT_EQ(0, get_offset(0, s));
+	ASSERT_EQ(2, get_offset(1, s));
+	ASSERT_EQ(4, get_offset(2, s));
+	ASSERT_EQ(6, get_offset(3, s));
+
+}
+
 
 int
 main(int argc, char** argv)

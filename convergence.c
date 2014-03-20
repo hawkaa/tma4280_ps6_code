@@ -11,7 +11,7 @@
 
 /* constants */
 #define N_MIN 3
-#define N_MAX 11
+#define N_MAX 9
 
 Real
 f(Real x, Real y)
@@ -29,26 +29,6 @@ u(Real x, Real y)
 	return sin(pi * x) * sin(2.0 * pi * y);
 }
 
-static Real
-get_umax(Real **b, int problem_size, function2D reference)
-{
-	int i, j;
-	Real umax, sum;
-	Real x, y;
-	umax = 0.0;
-	for (i = 1; i < problem_size; ++i) {
-		for (j = 1; j < problem_size; ++j) {
-			x = (Real)(j) / (Real)(problem_size);
-			y = (Real)(i) / (Real)(problem_size);
-			sum = fabs((*reference)(x, y) - b[i-1][j-1]);
-			if (sum > umax) {
-				umax = sum;
-			}
-		}
-	}
-	return umax;
-
-}
 
 int
 main(int argc, char** argv)
@@ -63,9 +43,11 @@ main(int argc, char** argv)
 
 	int i, j;
 	Real umax;
-
-	printf("# Convergence test for Problem Set 6 poisson solver\n");
-	printf("# Problem Size\tAbsolute error\n");
+	
+	if (rank == 0) {
+		printf("# Convergence test for Problem Set 6 poisson solver\n");
+		printf("# Problem Size\tAbsolute error\n");
+	}
 
 	for (i = N_MIN; i <= N_MAX; ++i) {
 		j = pow(2, i);
