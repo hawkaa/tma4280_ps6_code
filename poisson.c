@@ -88,7 +88,7 @@ main(int argc, char** argv)
 	if(rank == 0) wtimes = (Real*)malloc(sizeof(Real)*num_of_runs);
 	for(i = 0; i < num_of_runs; ++i){
 		t1 = WallTime();
-		umax = poisson(n, f ,u);	
+		umax = poisson_parallel(n, f ,u);	
 		t2 = WallTime();
 		if(rank == 0){
 			printf("run %d, time=%f, umax=%.10f\n", i, t2-t1, umax);
