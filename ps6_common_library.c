@@ -5,6 +5,7 @@
 #include <memory.h>
 #include <math.h>
 #include "mpi.h"
+#include "omp.h"
 
 /*local includes */
 #include "ps6_common_library.h"
@@ -79,7 +80,7 @@ poisson_parallel(int n, function2D f, function2D u)
 {
 	
 	/* vector and matrix structures */
-	Real *z;
+	Real **z;
 
 	int m, nn;
 	int i, j;
@@ -107,7 +108,7 @@ poisson_parallel(int n, function2D f, function2D u)
 	Real* diagonal = get_diagonal(m, n);
 
 	/* helper structure */
-	z = createRealArray(nn);
+	z = createReal2DArray(sizes[rank], nn);
 
 	/* allocate needed data structures */
 	Real **b_part = createReal2DArray(sizes[rank], m);
@@ -115,6 +116,7 @@ poisson_parallel(int n, function2D f, function2D u)
 
 	
 	/* fill out initial data */
+	#pragma omp parallel for schedule(static) private(i, j, x, y) 
 	for (i = 0; i < sizes[rank]; ++i) {
 		//printf("[Rank %i] Global %i, Local %i\n", rank, offset + i, i);
 		for (j = 0; j < m; ++j) {
@@ -124,17 +126,20 @@ poisson_parallel(int n, function2D f, function2D u)
 		}
 	}
 
+	#pragma omp parallel for schedule(static) private(i) 
 	for (i = 0; i < sizes[rank]; ++i) {
-		fst_(b_part[i], &n, z, &nn);
+		fst_(b_part[i], &n, z[i], &nn);
 	}
 	
 	transpose_part(bt_part, b_part, m, sizes, rank, num_ranks);
 		
+	#pragma omp parallel for schedule(static) private(i) 
 	for (i = 0; i < sizes[rank]; ++i) {
-		fstinv_(bt_part[i], &n, z, &nn);
+		fstinv_(bt_part[i], &n, z[i], &nn);
 	}
 
 	/* step 2 */
+	#pragma omp parallel for schedule(static) private(i, j) 
 	for (i = 0; i < sizes[rank]; ++i) {
 		for (j = 0; j < m; ++j) {
 			bt_part[i][j] = bt_part[i][j]/(diagonal[offset + i]+diagonal[j]);
@@ -142,14 +147,16 @@ poisson_parallel(int n, function2D f, function2D u)
 	}
 
 	/* step 3 */
+	#pragma omp parallel for schedule(static) private(i) 
 	for (i = 0; i < sizes[rank]; ++i) {
-		fst_(bt_part[i], &n, z, &nn);
+		fst_(bt_part[i], &n, z[i], &nn);
 	}
 	
 	transpose_part(b_part, bt_part, m, sizes, rank, num_ranks);
 	
+	#pragma omp parallel for schedule(static) private(i) 
 	for (i = 0; i < sizes[rank]; ++i) {
-		fstinv_(b_part[i], &n, z, &nn);
+		fstinv_(b_part[i], &n, z[i], &nn);
 	}
 
 	/* calculate u_max */
