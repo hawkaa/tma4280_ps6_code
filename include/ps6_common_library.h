@@ -27,6 +27,9 @@ extern Real
 poisson(int problem_size, function2D f, function2D u);
 
 extern void
+transpose_part(Real **bt_part, Real **b_part, int m, int *sizes, int rank, int num_ranks);
+
+extern void
 transpose(Real **bt, Real **b, int m);
 
 extern void

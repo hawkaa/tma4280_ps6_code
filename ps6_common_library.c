@@ -60,10 +60,11 @@ poisson_parallel(int n, function2D f, function2D u)
 	/* vector and matrix structures */
 	Real *z;
 
-	int m;
+	int m, nn;
 	int i, j;
 	Real x, y;
 	m = n - 1;
+	nn = 4 * n;
 
 
 	/* mpi */
@@ -84,20 +85,69 @@ poisson_parallel(int n, function2D f, function2D u)
 	/* diagonal, same diagonal generated for all */
 	Real* diagonal = get_diagonal(m, n);
 
+	/* helper structure */
+	z = createRealArray(nn);
+
 	/* allocate needed data structures */
 	Real **b_part = createReal2DArray(sizes[rank], m);
 	Real **bt_part = createReal2DArray(sizes[rank], m);
 
 	
+	/* fill out initial data */
 	for (i = 0; i < sizes[rank]; ++i) {
-		printf("[Rank %i] Global %i, Local %i\n", rank, offset + i, i);
+		//printf("[Rank %i] Global %i, Local %i\n", rank, offset + i, i);
 		for (j = 0; j < m; ++j) {
-			x = (Real)(j+1) / (Real)(n);
+			x = (Real)(j + 1) / (Real)(n);
 			y = (Real)(offset + i + 1) / (Real)(n);
 			b_part[i][j] = h * h * (*f)(x, y);
 		}
 	}
-	return 0.1;
+
+	for (i = 0; i < sizes[rank]; ++i) {
+		fst_(b_part[i], &n, z, &nn);
+	}
+	
+	transpose_part(bt_part, b_part, m, sizes, rank, num_ranks);
+		
+	for (i = 0; i < sizes[rank]; ++i) {
+		fstinv_(bt_part[i], &n, z, &nn);
+	}
+
+	/* step 2 */
+	for (i = 0; i < sizes[rank]; ++i) {
+		for (j = 0; j < m; ++j) {
+			bt_part[i][j] = bt_part[i][j]/(diagonal[offset + i]+diagonal[j]);
+		}
+	}
+
+	/* step 3 */
+	for (i = 0; i < sizes[rank]; ++i) {
+		fst_(bt_part[i], &n, z, &nn);
+	}
+	
+	transpose_part(b_part, bt_part, m, sizes, rank, num_ranks);
+	
+	for (i = 0; i < sizes[rank]; ++i) {
+		fstinv_(b_part[i], &n, z, &nn);
+	}
+
+	/* calculate u_max */
+	Real sum;
+	Real u_max = 0.0;
+	for (i = 0; i < sizes[rank]; ++i) {
+		for (j = 0; j < m; ++j) {
+			x = (Real)(j + 1) / (Real)(n);
+			y = (Real)(i + offset + 1) / (Real)(n);
+			sum = fabs((*u)(x, y) - b_part[i][j]);
+			if (sum > u_max) {
+				u_max = sum;
+			}
+		}
+	}
+	Real u_max_rank_0;
+
+	MPI_Reduce(&u_max, &u_max_rank_0, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
+	return u_max_rank_0;
 }
 /*
  * Poisson solver.
@@ -173,7 +223,7 @@ poisson(int n, function2D f, function2D u)
 	for (i = 0; i < m; ++i) {
 		fstinv_(b[i], &n, z, &nn);
 	}
-	
+		
 	return get_umax(b, n, u);
 }
 
