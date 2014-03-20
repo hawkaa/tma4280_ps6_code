@@ -112,79 +112,13 @@ main(int argc, char** argv)
 		sum = sum - max - min;
 		printf("min: %f\n", min);
 		printf("max: %f\n", max);
-		printf("avarage time: %f\n", sum/(num_of_runs-2));
+		printf("average time: %f\n", sum/(num_of_runs-2));
 	}
 	
 	#ifdef HAVE_MPI
 	MPI_Finalize();
 	#endif
 	
-	/*
-	Real** b;
-	Real** bt;
-	*/
-	/* Test */
-	/*
-	int counter;
-
-	b = createReal2DArray(n, n);
-	
-	counter = 1;
-	for (i = 0; i < n; ++i) {
-		for  (j = 0; j < n; ++j) {
-			b[i][j] = counter++;
-		}
-	}
-
-	transpose(bt, b, n);
-        */
-
-	/*int* sizes = create_SIZES(n, size);
-	printf("SIZES: ");
-	printArr(sizes, size);
-
-	int* s_count = create_Scount(rank, size, sizes);
-	printf("S_count: ");
-	printArr(s_count, size);
-
-	int* s_displ = create_Sdispl(rank, size, sizes);
-	printf("S_displ: ");
-	printArr(s_displ, size);
-	
-	free(sizes);
-	free(s_count);
-	free(s_displ);*/
-
-
-	/*
-	solution = poisson(n, *f);
-	//printf("Umax: %f\n", get_umax(solution, n));
-	for (i = 0; i < n - 1; ++i) {
-		for (j = 0; j < n - 1; ++j) {
-			printf("%f\t", solution[i][j]);
-		}
-		printf("\n");
-	}
-	printf("\n");
-	Real x, y;
-	Real umax, res;
-	umax = 0.0;
-	for (i = 1; i < n; ++i) {
-		for (j = 1; j < n; ++j) {
-			x = (Real)j / (Real)(n);
-			y = (Real)i / (Real)(n);
-			printf("x = %f\n", x);
-			res = fabs(solution[i-1][j-1] - u(x, y));
-			if ( res > umax) {
-				umax = res;
-			}
-			printf("%f\t", u(x, y));
-		}
-		printf("\n");
-	}
-	printf("\nUMAX: %f\n", umax);
-	*/
-
 	return 0;
 
 }
