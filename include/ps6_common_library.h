@@ -21,7 +21,7 @@ fstinv_(Real *v, int *n, Real *w, int *nn);
 /* functions defined in ps6_common_library.c */
 
 extern Real
-poisson(int problem_size, function2D f);
+poisson(int problem_size, function2D f, function2D u);
 
 
 extern Real

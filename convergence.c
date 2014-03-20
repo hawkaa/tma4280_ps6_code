@@ -63,13 +63,15 @@ main(int argc, char** argv)
 
 	int i, j;
 	Real umax;
-
-	printf("# Convergence test for Problem Set 6 poisson solver\n");
-	printf("# Problem Size\tAbsolute error\n");
+	
+	if (rank == 0) {
+		printf("# Convergence test for Problem Set 6 poisson solver\n");
+		printf("# Problem Size\tAbsolute error\n");
+	}
 
 	for (i = N_MIN; i <= N_MAX; ++i) {
 		j = pow(2, i);
-		umax = poisson(j, *f);
+		umax = poisson(j, *f, *u);
 		if (rank == 0) {
 			printf("%i\t%.16e\n", j, umax);
 		}

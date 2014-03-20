@@ -10,6 +10,27 @@
 #include "ps6_common_library.h"
 
 
+static Real
+get_umax(Real **b, int n, function2D u)
+{
+	int i, j;
+	Real umax, sum;
+	Real x, y;
+	umax = 0.0;
+	for (i = 1; i < n; ++i) {
+		for (j = 1; j < n; ++j) {
+			x = (Real)(j) / (Real)(n);
+			y = (Real)(i) / (Real)(n);
+			sum = fabs((*u)(x, y) - b[i-1][j-1]);
+			if (sum > umax) {
+				umax = sum;
+			}
+		}
+	}
+	return umax;
+
+}
+
 
 /*
  * Poisson solver.
@@ -18,13 +39,12 @@
  * Only rank 0 will have valid result
  */
 Real
-poisson(int problem_size, function2D f)
+poisson(int problem_size, function2D f, function2D u)
 {
 	Real *diag, **b, **bt, *z;
 	Real pi, h, umax;
 	int i, j, n, m, nn;
 
-	return 0.1;
 	
 	/* the total number of grid points in each spatial direction is (n+1) */
 	/* the total number of degrees-of-freedom in each spatial direction is (n-1) */
@@ -81,6 +101,8 @@ poisson(int problem_size, function2D f)
 	  fstinv_(b[j], &n, z, &nn);
 	}
 	
+	return get_umax(b, n, u);
+	return 0.1;
 	//return b;
 
 }
