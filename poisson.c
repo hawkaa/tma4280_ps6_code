@@ -103,7 +103,7 @@ main(int argc, char** argv)
 		Real sum;
 		Real max, min;
 		max = min = wtimes[0];
-		sum = 0.0;
+		sum = wtimes[0];
 		for(i = 1; i < num_of_runs; ++i){
 			if(wtimes[i] > max) max = wtimes[i];
 			if(wtimes[i] < min) min = wtimes[i];
