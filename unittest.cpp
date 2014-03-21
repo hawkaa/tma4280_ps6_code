@@ -38,7 +38,7 @@ class Matrix3x3 : public Matrix {
 	protected:
 	
 	virtual void SetUp() {
-		b = createReal2DArray(3, 3);
+		b = create_real_2d_array(3, 3);
 		int counter = 0;
 		for (int i = 0; i < 3; ++i) {
 			for(int j = 0; j < 3; ++j) {
@@ -69,7 +69,7 @@ class Matrix7x7 : public Matrix {
 	protected:
 	
 	virtual void SetUp() {
-		b = createReal2DArray(7, 7);
+		b = create_real_2d_array(7, 7);
 		int counter = 0;
 		for (int i = 0; i < 7; ++i) {
 			for(int j = 0; j < 7; ++j) {
@@ -100,9 +100,9 @@ class Matrix7x7 : public Matrix {
 /*
  * Test ownership
  */
-TEST_F(Matrix3x3, get_ownership)
+TEST_F(Matrix3x3, create_ownership)
 {
-	int *ownership_output = get_ownership(m, sizes, num_ranks);
+	int *ownership_output = create_ownership(m, sizes, num_ranks);
 	for (int i = 0; i < m; ++i) {
 		ASSERT_EQ(ownership[i], ownership_output[i]);
 	}
@@ -112,9 +112,9 @@ TEST_F(Matrix3x3, get_ownership)
 /*
  * Test ownership
  */
-TEST_F(Matrix7x7, get_ownership)
+TEST_F(Matrix7x7, create_ownership)
 {
-	int *ownership_output = get_ownership(m, sizes, num_ranks);
+	int *ownership_output = create_ownership(m, sizes, num_ranks);
 	for (int i = 0; i < m; ++i) {
 		ASSERT_EQ(ownership[i], ownership_output[i]);
 	}
@@ -126,8 +126,8 @@ TEST_F(Matrix7x7, get_ownership)
  */
 TEST(transpose, HardCoded)
 {
-	Real **b = createReal2DArray(2, 2);
-	Real **bt = createReal2DArray(2, 2);
+	Real **b = create_real_2d_array(2, 2);
+	Real **bt = create_real_2d_array(2, 2);
 	b[0][0] = 1.0;
 	b[0][1] = 2.0;
 	b[1][0] = 3.0;
@@ -152,8 +152,8 @@ TEST(transpose, Looped)
 	int matrix_size = 100;
 
 	/* matrix buffers */
-	Real **b = createReal2DArray(matrix_size, matrix_size);
-	Real **bt = createReal2DArray(matrix_size, matrix_size);
+	Real **b = create_real_2d_array(matrix_size, matrix_size);
+	Real **bt = create_real_2d_array(matrix_size, matrix_size);
 
 	int counter = 0;
 	for (i = 0; i < matrix_size; ++i) {
@@ -182,7 +182,7 @@ TEST(transpose, Looped)
  */
 TEST(create_send_buffer, test1)
 {
-	Real **b = createReal2DArray(2, 7);	
+	Real **b = create_real_2d_array(2, 7);	
 	
 	int value = 1;
 	for(int i = 0; i < 2; i++){
@@ -198,8 +198,8 @@ TEST(create_send_buffer, test1)
 
 	/* generate proper test data */
 	int sizes[3] = {2,2,3};
-	int *s_count = create_Scount(0, 3, sizes);
-	int *s_displ = create_Sdispl(0, 3, sizes);
+	int *s_count = create_s_count(0, 3, sizes);
+	int *s_displ = create_s_displ(0, 3, sizes);
 	
 	Real *send_buf = create_send_buffer(b, 7, sizes, 0, 3, s_displ, s_count);
 
@@ -229,9 +229,9 @@ TEST(create_send_buffer, test1)
 /*
  * Test create_sizes
  */
-TEST(create_SIZES, Even)
+TEST(create_sizes, Even)
 {
-	int *s = create_SIZES(8, 4);
+	int *s = create_sizes(8, 4);
 
 	ASSERT_EQ(2, s[0]);
 	ASSERT_EQ(2, s[1]);
@@ -244,9 +244,9 @@ TEST(create_SIZES, Even)
 /*
  * Test create_sizes
  */
-TEST(create_SIZES, LessRowsThanProc)
+TEST(create_sizes, LessRowsThanProc)
 {
-	int *s = create_SIZES(3,5);
+	int *s = create_sizes(3,5);
 
 	ASSERT_EQ(0, s[0]);
 	ASSERT_EQ(0, s[1]);
@@ -260,9 +260,9 @@ TEST(create_SIZES, LessRowsThanProc)
 /*
  * Test create_sizes
  */
-TEST(create_SIZES, OneProc)
+TEST(create_sizes, OneProc)
 {
-	int *s = create_SIZES(4,1);
+	int *s = create_sizes(4,1);
 
 	ASSERT_EQ(4, s[0]);
 
@@ -272,9 +272,9 @@ TEST(create_SIZES, OneProc)
 /*
  * test create_sizes
  */
-TEST(create_SIZES, UnEven)
+TEST(create_sizes, UnEven)
 {
-	int *s = create_SIZES(7, 4);
+	int *s = create_sizes(7, 4);
 
 	ASSERT_EQ(1, s[0]);
 	ASSERT_EQ(2, s[1]);
@@ -288,18 +288,18 @@ TEST(create_SIZES, UnEven)
  * test create_s_count
  * Testing on a 3x3 matrix for 2 proccessors
  */
-TEST(create_Scount, 3x3_2p)
+TEST(create_s_count, 3x3_2p)
 {
 	int sizes[2] = {1, 2};
 	
 	/* s_count for rank 0 */
 
-	int *s_count_r0 = create_Scount(0, 2, sizes);
+	int *s_count_r0 = create_s_count(0, 2, sizes);
 	ASSERT_EQ(1, s_count_r0[0]);
 	ASSERT_EQ(2, s_count_r0[1]);
 	free(s_count_r0);
 
-	int *s_count_r1 = create_Scount(1, 2, sizes);
+	int *s_count_r1 = create_s_count(1, 2, sizes);
 	ASSERT_EQ(2, s_count_r1[0]);
 	ASSERT_EQ(4, s_count_r1[1]);
 	free(s_count_r1);
@@ -309,81 +309,81 @@ TEST(create_Scount, 3x3_2p)
  * test create_s_count
  * testing on a 7x7 matrix for 3 processors
  */
-TEST(create_Scount, 7x7_3p)
+TEST(create_s_count, 7x7_3p)
 {
 	int sizes[3] = {2, 2, 3};
 
-	int *s_count_r0 = create_Scount(0, 3, sizes);
+	int *s_count_r0 = create_s_count(0, 3, sizes);
 	ASSERT_EQ(4, s_count_r0[0]);
 	ASSERT_EQ(4, s_count_r0[1]);
 	ASSERT_EQ(6, s_count_r0[2]);
 	free(s_count_r0);
 
-	int *s_count_r1 = create_Scount(1, 3, sizes);
+	int *s_count_r1 = create_s_count(1, 3, sizes);
 	ASSERT_EQ(4, s_count_r1[0]);
 	ASSERT_EQ(4, s_count_r1[1]);
 	ASSERT_EQ(6, s_count_r1[2]);
 	free(s_count_r1);
 
-	int *s_count_r2 = create_Scount(2, 3, sizes);
+	int *s_count_r2 = create_s_count(2, 3, sizes);
 	ASSERT_EQ(6, s_count_r2[0]);
 	ASSERT_EQ(6, s_count_r2[1]);
 	ASSERT_EQ(9, s_count_r2[2]);
 	free(s_count_r2);
 }
 
-TEST(create_Sdispl, 3x3_2p)
+TEST(create_s_displ, 3x3_2p)
 {
 	int sizes[2] = {1, 2};
 
-	int *s_displ_r0 = create_Sdispl(0, 2, sizes);
+	int *s_displ_r0 = create_s_displ(0, 2, sizes);
 	ASSERT_EQ(0, s_displ_r0[0]);
 	ASSERT_EQ(1, s_displ_r0[1]);
 	free(s_displ_r0);
 
-	int *s_displ_r1 = create_Sdispl(1, 2, sizes);
+	int *s_displ_r1 = create_s_displ(1, 2, sizes);
 	ASSERT_EQ(0, s_displ_r1[0]);
 	ASSERT_EQ(2, s_displ_r1[1]);
 	free(s_displ_r1);
 }
 
-TEST(create_Sdispl, 7x7_3p)
+TEST(create_s_displ, 7x7_3p)
 {
 	int sizes[3] = {2, 2, 3};
 	
 	/* rank 0 */
-	int *s_displ_r0 = create_Sdispl(0, 3, sizes);
+	int *s_displ_r0 = create_s_displ(0, 3, sizes);
 	ASSERT_EQ(0, s_displ_r0[0]);
 	ASSERT_EQ(4, s_displ_r0[1]);
 	ASSERT_EQ(8, s_displ_r0[2]);
 	free(s_displ_r0);
 
 	/* rank 1 */
-	int *s_displ_r1 = create_Sdispl(1, 3, sizes);
+	int *s_displ_r1 = create_s_displ(1, 3, sizes);
 	ASSERT_EQ(0, s_displ_r1[0]);
 	ASSERT_EQ(4, s_displ_r1[1]);
 	ASSERT_EQ(8, s_displ_r1[2]);
 	free(s_displ_r1);
 
 	/* rank 2 */
-	int *s_displ_r2 = create_Sdispl(2, 3, sizes);
+	int *s_displ_r2 = create_s_displ(2, 3, sizes);
 	ASSERT_EQ(0, s_displ_r2[0]);
 	ASSERT_EQ(6, s_displ_r2[1]);
 	ASSERT_EQ(12, s_displ_r2[2]);
 	free(s_displ_r2);
 }
 
-TEST_F(Matrix3x3, get_matrix_rows)
+TEST_F(Matrix3x3, create_matrix_rows)
 {
 	
 
-	Real **b0 = get_matrix_rows(b, 3, 0, sizes);
+	Real **b0 = create_matrix_rows(b, 3, 0, sizes);
 	ASSERT_FLOAT_EQ(1, b0[0][0]);
 	ASSERT_FLOAT_EQ(2, b0[0][1]);
 	ASSERT_FLOAT_EQ(3, b0[0][2]);
 	free(b0);
 
-	Real **b1 = get_matrix_rows(b, 3, 1, sizes);
+	Real **b1 = create_matrix_rows(b, 3, 1, sizes);
 	ASSERT_FLOAT_EQ(4, b1[0][0]);
 	ASSERT_FLOAT_EQ(5, b1[0][1]);
 	ASSERT_FLOAT_EQ(6, b1[0][2]);
@@ -424,7 +424,7 @@ TEST(get_offset, p3)
 
 TEST(get_offest, combined)
 {
-	int *sizes = create_SIZES(8, 4);
+	int *sizes = create_sizes(8, 4);
 
 	ASSERT_EQ(0, get_offset(0, sizes));
 	ASSERT_EQ(2, get_offset(1, sizes));

@@ -23,8 +23,8 @@ static int rank;
 TEST(transpose_parallel, HardCoded)
 {
 	/* matrix buffers */
-	Real **b = createReal2DArray(2, 2);
-	Real **bt = createReal2DArray(2, 2);
+	Real **b = create_real_2d_array(2, 2);
+	Real **bt = create_real_2d_array(2, 2);
 
 	/* values */
 	b[0][0] = 1.0;
@@ -60,8 +60,8 @@ TEST(Transpose, Looped)
 	int matrix_size = 100;
 
 	/* matrix buffers */
-	Real **b = createReal2DArray(matrix_size, matrix_size);
-	Real **bt = createReal2DArray(matrix_size, matrix_size);
+	Real **b = create_real_2d_array(matrix_size, matrix_size);
+	Real **bt = create_real_2d_array(matrix_size, matrix_size);
 
 	int counter = 0;
 	for (i = 0; i < matrix_size; ++i) {
