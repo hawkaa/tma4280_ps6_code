@@ -70,6 +70,9 @@ create_real_array(const int n);
 extern Real**
 create_real_2d_array(int m, int n);
 
+extern void
+free_real_2d_array(Real **arr);
+
 extern int* 
 create_sizes(int m, const int num_ranks);
 
@@ -77,7 +80,7 @@ extern int*
 create_s_count(const int rank, const int num_ranks, const int* sizes);
 
 extern int*
-create_s_displ(const int current_rank, const int num_ranks, const int* sizes);
+create_s_displ(const int rank, const int num_ranks, const int* sizes);
 
 extern int*
 create_ownership(const int m, const int* sizes, const int num_ranks);

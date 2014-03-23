@@ -1,3 +1,26 @@
+/*
+ * PROBLEM SET 6 COMMON LIBRARY
+ *
+ * Contains all the logic for the FST Poisson Solver for problem set 6. The
+ * functions in this module is purposedly made stateless to simplify unit
+ * testing.
+ *
+ * The parameters keep a naming convention:
+ *
+ * n		problem size
+ * m		matrix size (problem size - 1)
+ * b_part 	a part of the problem matrix, splitted in rows
+ * bt_part	as b_part, but transposed
+ * rank		current process/rank (in an MPI context)
+ * num_ranks	number of processes/ranks (in an MPI context)
+ * sizes 	array contaning how many row each rank own
+ * s_count 	value that are needed by MPI to know how much data to send to each
+ *		process
+ * s_displ	displacement array needed by MPI to find out where to locate the
+ *		data that goes to each process
+ *
+ */
+
 /* global includes */
 #include <stdio.h>
 #include <stddef.h>
@@ -23,13 +46,17 @@
 /*
  * Print 2 dimensional array helper method
  * Used while debugging
+ *
+ * arr - array to print
+ * rows - number of rows in array
+ * cols - number of columns in array
  */
 static void
 print_2d_array(const Real** arr, const int rows,  const int cols)
 {
 	int i, j;
-	for(i = 0; i <rows; i++){
-		for(j = 0; j < cols; j++){
+	for (i = 0; i < rows; i++) {
+		for (j = 0; j < cols; j++) {
 			printf("%f   ", arr[i][j]);
 		}
 		printf("\n");
@@ -38,6 +65,9 @@ print_2d_array(const Real** arr, const int rows,  const int cols)
 
 /*
  * Print 1 dimensional array helper method
+ *
+ * arr - array to print
+ * size - array length
  */
 static void
 print_array(const Real* arr, const int size)
@@ -50,40 +80,42 @@ print_array(const Real* arr, const int size)
 }
 
 /*
- * Generate the full diagonal needed for the fst poisson solver
- *
- * m - matrix size
- * n - problem size
+ * Generate the full diagonal needed for the fst poisson solver.
  */
 static Real*
 create_diagonal(const int m, const int n)
 {
+	/* loop variable */
 	int i;
-	Real pi;
-	Real *d;
 	
-	pi = 4.0 * atan(1.0);
+	/* pi reference */
+	Real pi = 4.0 * atan(1.0);
 
-	d = create_real_array(m);
+	/* allocate array */
+	Real *d = create_real_array(m);
+
+	/* fill in data */
 	for (i = 0; i < m; ++i) {
 		d[i] = 2.0 * (1.0 - cos((i + 1) * pi / (Real)n));
 	}
+
+	/* return array pointer */
 	return d;
 }
 
-static void
-freeReal2DArray(Real** arr, const int m)
-{
-	free(arr[0]);
-	free(arr);
-}
-
+/*
+ * Allocate real array and initialize to 0.0
+ *
+ * n - array size
+ */
 Real*
 create_real_array(const int n)
 {
 	Real *a;
 	int i;
 	a = (Real *)malloc(n*sizeof(Real));
+
+	/* initialize with OMP (if available) */
 	#pragma omp parallel for schedule(static) private(i)
 	for (i=0; i < n; i++) {
 		a[i] = 0.0;
@@ -91,6 +123,12 @@ create_real_array(const int n)
 	return (a);
 }
 
+/*
+ * Allocate real two dimensional array
+ *
+ * n1 - number of rows
+ * n2 - number of columns
+ */
 Real**
 create_real_2d_array(int n1, int n2)
 {
@@ -107,18 +145,40 @@ create_real_2d_array(int n1, int n2)
 	return (a);
 }
 
+/*
+ * De-allocates two dimensional array
+ *
+ * arr - the array to free
+ */
+void
+free_real_2d_array(Real** arr)
+{
+	free(arr[0]);
+	free(arr);
+}
 
+/*
+ * Create sizes array
+ * Will calculate how many rows each rank should own.
+ */
 int*
 create_sizes(int m, const int num_ranks)
 {
-	int* sizes_arr = (int*)malloc(sizeof(int)*num_ranks);
+	/* loop variable */
 	int i;
+
+	/* allocate array */
+	int* sizes_arr = (int*)malloc(sizeof(int)*num_ranks);
+
 	/* find number of rows per process */
 	int num_p_proc = m/num_ranks;
+
 	/* possible rest rows */
 	int num_p_proc_r = m%num_ranks;	
+
 	/* node 0 gets less work */
 	sizes_arr[0] = num_p_proc;
+
 	for(i = num_ranks-1; i> 0; i--){
 		if(m <= 0){
 			/* if we do not have any rows left, give zero to the rest */
@@ -133,50 +193,90 @@ create_sizes(int m, const int num_ranks)
 		}
 		m--;	
 	}
+
 	/* return sizes array */	
 	return sizes_arr;
 		
 }
 
-/* called by each process to know the number of elements to send to other processes */
+/*
+ * Create s count array
+ * This function will calculate how much data the current rank should send to
+ * each process.
+ */
 int*
-create_s_count(const int rank, int num_ranks, const int* sizes)
+create_s_count(const int rank, const int num_ranks, const int* sizes)
 {
+	/* loop variable */
 	int i;
-	int* s_count = (int*)malloc(sizeof(int)*num_ranks);
+
+	/* allocate array */
+	int* s_count = (int*)malloc(sizeof(int) * num_ranks);
+
+	/* can be done in parallel */
 	#pragma omp parallel for schedule(static) private(i)
-	for(i = 0; i < num_ranks; i++){
-		s_count[i] = sizes[rank]*sizes[i];	
+	for (i = 0; i < num_ranks; i++) {
+		s_count[i] = sizes[rank] * sizes[i];	
 	}
+
+	/* return array */
 	return s_count;
 }
 
-/* called by each process to know the displacement in the send buffer to each process */
+/*
+ * Create s displacement array
+ * Called by each process to know the displacement in the send buffer to each
+ * process
+ */
 int*
-create_s_displ(const int current_rank, const int num_ranks, const int* sizes)
+create_s_displ(const int rank, const int num_ranks, const int* sizes)
 {
+	/* loop variable */
 	int i;
+
+	/* allocate array */
 	int* s_displ = (int*)malloc(sizeof(int)*num_ranks);
+
+	/* displacement base case, rank 0 will always be 0 */
 	s_displ[0] = 0;
-	for(i = 1; i < num_ranks; i++){
-		s_displ[i] = s_displ[i-1] + (sizes[current_rank]*sizes[i-1]);	
+
+	/* iterating over values, next value will depend on previous */
+	for (i = 1; i < num_ranks; i++) {
+		s_displ[i] = s_displ[i - 1] + (sizes[rank] * sizes[i - 1]);
 	}
+
+	/* return array */
 	return s_displ;
 }
 
+/*
+ * Create ownership array
+ * Will allocate an array of m size that indicates which rank owns which row
+ */
 int*
 create_ownership(const int m, const int* sizes, const int num_ranks)
 {
+	/* loop variable */
+	int i;
+	
+	/* allocate array */
 	int *ownership = malloc(sizeof(int) * m);
 	
-	int rank, i;
-	rank = 0;
+	/* start with rank 0 */
+	int rank = 0;
+
+	/* initiate row counter to size of rank 0 */
 	int c = sizes[0];
-	// diskutere denne
+
 	for (i = 0; i < m; ++i) {
+		/* set ownership */
 		ownership[i] = rank;
+
+		/* decrease counter */
 		--c;
-		if (c == 0){
+
+		if (c == 0) {
+			/* no more rows belongs to current rank, increment */
 			++rank;
 			c = sizes[rank];
 		}
@@ -185,6 +285,12 @@ create_ownership(const int m, const int* sizes, const int num_ranks)
 	return ownership;
 }
 
+/*
+ * Create send buffer
+ * This method will allocate a send bufferarray needed for the MPI Alltoallv.
+ * It will place data going to the different ranks according to the s_count
+ * and s_displ vector.
+ */
 Real*
 create_send_buffer(Real **b_part, const int m, const int *sizes,
 		const int rank, const int num_ranks, const int *s_displ, 
@@ -403,9 +509,9 @@ poisson_parallel(int n, function2D f, function2D u)
 	MPI_Reduce(&u_max, &u_max_rank_0, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
 	
 	/* clean up */
-	freeReal2DArray(b_part, sizes[rank]);
-	freeReal2DArray(bt_part, sizes[rank]);
-	freeReal2DArray(z, sizes[rank]);
+	free_real_2d_array(b_part);
+	free_real_2d_array(bt_part);
+	free_real_2d_array(z);
 	free(sizes);
 	free(diagonal);
 	free(s_count);
@@ -501,8 +607,8 @@ poisson(int n, function2D f, function2D u)
 		}
 	}
 
-	freeReal2DArray(b, m);
-	freeReal2DArray(bt, m);
+	free_real_2d_array(b);
+	free_real_2d_array(bt);
 	free(diagonal);
 	free(z);
 		
@@ -555,8 +661,8 @@ transpose_parallel(Real **bt, Real **b, int m)
 	}
 	
 	/* clean up */
-	freeReal2DArray(b_part, sizes[rank]);
-	freeReal2DArray(bt_part, sizes[rank]);
+	free_real_2d_array(b_part);
+	free_real_2d_array(bt_part);
 	free(sizes);
 	free(s_count);
 	free(s_displ);
