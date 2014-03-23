@@ -65,7 +65,7 @@ add_custom_target(test-mpi
 
 # Create the plot file
 add_custom_command(OUTPUT convergence_plot_data.tmp
-		COMMAND mpirun -np 8 $(CMAKE_BINARY_DIR)/convergence > convergence_plot_data.tmp
+		COMMAND mpirun -np 8 $(CMAKE_BINARY_DIR)/convergence 3 11 > convergence_plot_data.tmp
 		DEPENDS convergence
 		COMMENT "Needed to create plot data")
 

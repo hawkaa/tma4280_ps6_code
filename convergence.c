@@ -10,15 +10,11 @@
 /* local includes */
 #include "ps6_common_library.h"
 
-/* constants */
-#define N_MIN 3
-#define N_MAX 11	
-
 /*
  * f function for the poisson problem
  * 5 * pi^2 * sin(pi * x) * sin(2 * pi * y)
  */
-Real
+static Real
 f(Real x, Real y)
 {
 	Real pi;
@@ -30,7 +26,7 @@ f(Real x, Real y)
  * u (reference) function for the poisson problem
  * 5 * pi^2 * sin(pi * x) * sin(2 * pi * y)
  */
-Real
+static Real
 u(Real x, Real y)
 {
 	Real pi;
@@ -44,8 +40,21 @@ u(Real x, Real y)
 int
 main(int argc, char** argv)
 {
-	/* get rank variable */
+	/* u_max variable */
+	Real u_max;
 
+	/* loop variables */
+	int j, i;
+
+	/* read arguments */
+	if (argc < 3) {
+		printf("Need to input n_min and n_max for convergence test\n");
+		exit(1);
+	}
+	int n_min = atoi(argv[1]);
+	int n_max = atoi(argv[2]);
+
+	/* get rank variable */
 	int rank;
 	#ifdef HAVE_MPI
 	MPI_Init(&argc, &argv);
@@ -54,9 +63,8 @@ main(int argc, char** argv)
 	rank = 0;
 	#endif
 
-	/* u_max variable */
-	Real u_max;
-	int j, i;
+
+
 
 	/* header data for gnuplot output */
 	if (rank == 0) {
@@ -65,7 +73,7 @@ main(int argc, char** argv)
 	}
 	
 	/* iterating over different problem sizes */
-	for (i = N_MIN; i <= N_MAX; ++i) {
+	for (i = n_min; i <= n_max; ++i) {
 		j = pow(2, i);
 		u_max = poisson_parallel(j, *f, *u);
 		if (rank == 0) {
