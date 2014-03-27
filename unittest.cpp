@@ -373,17 +373,17 @@ TEST(create_s_displ, 7x7_3p)
 	free(s_displ_r2);
 }
 
-TEST_F(Matrix3x3, create_matrix_rows)
+TEST_F(Matrix3x3, create_part_matrix)
 {
 	
 
-	Real **b0 = create_matrix_rows(b, 3, 0, sizes);
+	Real **b0 = create_part_matrix(b, 3, 0, sizes);
 	ASSERT_FLOAT_EQ(1, b0[0][0]);
 	ASSERT_FLOAT_EQ(2, b0[0][1]);
 	ASSERT_FLOAT_EQ(3, b0[0][2]);
 	free(b0);
 
-	Real **b1 = create_matrix_rows(b, 3, 1, sizes);
+	Real **b1 = create_part_matrix(b, 3, 1, sizes);
 	ASSERT_FLOAT_EQ(4, b1[0][0]);
 	ASSERT_FLOAT_EQ(5, b1[0][1]);
 	ASSERT_FLOAT_EQ(6, b1[0][2]);

@@ -390,7 +390,7 @@ get_offset(const int rank, const int *sizes)
 }
 
 Real**
-create_matrix_rows(Real** b, const int m, const int rank, const int *sizes)
+create_part_matrix(Real** b, const int m, const int rank, const int *sizes)
 {
 	Real** b_return;
 	int offset, i, j;
@@ -405,10 +405,10 @@ create_matrix_rows(Real** b, const int m, const int rank, const int *sizes)
 }
 
 /*
- * Transpose function
- * Only rank 0 will have a valid result
+ * Transpose partial matrix 
+ * This function will set up send- and receive buffers and receive a transposed
+ * partial matrix 
  */
-
 void
 transpose_part(Real **bt_part, Real **b_part, int m, int *sizes, int rank, int num_ranks, int* s_displ, int* s_count)
 {
@@ -682,10 +682,10 @@ transpose_parallel(Real **bt, Real **b, int m)
 	if(rank == 0){	
 		int i;
 		for(i = 1; i < num_ranks; ++i){
-			b_part = create_matrix_rows(b, m, i, sizes);
+			b_part = create_part_matrix(b, m, i, sizes);
 			MPI_Send(&(b_part[0][0]), m*sizes[i], MPI_DOUBLE, i , 100, MPI_COMM_WORLD);
 		}
-		b_part = create_matrix_rows(b, m , 0, sizes);
+		b_part = create_part_matrix(b, m , 0, sizes);
 	} else{
 		MPI_Recv(&(b_part[0][0]), m*sizes[rank], MPI_DOUBLE, 0, 100, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 	}

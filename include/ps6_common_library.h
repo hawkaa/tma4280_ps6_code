@@ -99,7 +99,7 @@ extern int
 get_offset(const int rank, const int *sizes);
 
 extern Real**
-create_matrix_rows(Real** b, const int m, const int current_rank,
+create_part_matrix(Real** b, const int m, const int current_rank,
 		const int *sizes);
 
 
