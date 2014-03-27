@@ -54,6 +54,18 @@ extern void
 transpose_parallel(Real **bt, Real **b, int m);
 
 /*
+ * UTILITY METHODS
+ * These functions should be used from other modules, but are only thought
+ * of as utility, and has no side effects regarding use of OpenMP and MPI.
+ * Documentation of each function resides in ps6_common_library.c
+ */
+
+extern Real
+wall_time(void);
+
+extern Real
+get_average(Real *arr, int n, int cutoff);
+/*
  * INTERNAL METHODS
  * Helper methods for the ps6_common_library.c.
  * These are exposed in this header file for so the unit test framework

@@ -429,6 +429,49 @@ transpose_part(Real **bt_part, Real **b_part, int m, int *sizes, int rank, int n
 }
 
 /*
+ * UTILITY METHODS
+ */
+
+static int
+compare_real (const void * a, const void * b)
+{
+	if (*(Real*)a < *(Real*)b) return -1;
+	if (*(Real*)a == *(Real*)b) return 0;
+	if (*(Real*)a > *(Real*)b) return 1;
+}
+
+Real
+get_average(Real *arr, int n, int cutoff)
+{
+	int i;
+	qsort(arr, n, sizeof(Real), &compare_real);	
+	Real sum = 0.0;
+	for (i = cutoff; i < n - cutoff; ++i) {
+		sum += arr[i];
+	}
+	return sum / (n - 2 * cutoff);
+}
+
+/*
+ * Wall time
+ * Taken from the lecturers common.c library
+ */
+Real
+wall_time ()
+{
+	#ifdef HAVE_MPI
+ 	return MPI_Wtime();
+	#elif defined(HAVE_OPENMP)
+ 	return omp_get_wtime();
+	#else
+ 	struct timeval tmpTime;
+ 	gettimeofday(&tmpTime,NULL);
+ 	return tmpTime.tv_sec + tmpTime.tv_usec/1.0e6;
+	#endif
+}
+
+
+/*
  * ENTRY METHODS
  */
 

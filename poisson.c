@@ -7,19 +7,8 @@
 /* local includes */
 #include "ps6_common_library.h"
 
-/* Taken from the lecturers common.c library */
-Real WallTime ()
-{
-	#ifdef HAVE_MPI
- 	 return MPI_Wtime();
-	#elif defined(HAVE_OPENMP)
- 	 return omp_get_wtime();
-	#else
- 	 struct timeval tmpTime;
- 	 gettimeofday(&tmpTime,NULL);
- 	 return tmpTime.tv_sec + tmpTime.tv_usec/1.0e6;
-	#endif
-}
+/* constants */
+#define OUTLIERS_CUTOFF 2
 
 Real
 f(Real x, Real y)
@@ -37,33 +26,6 @@ u(Real x, Real y)
 	return sin(pi * x) * sin(2.0 * pi * y);
 }
 
-void
-printArr(int* arr, int size)
-{
-	int i;
-	for(i = 0; i < size; i++){
-		printf("%d   ", arr[i]);
-	}
-	printf("\n");
-}
-
-Real*
-Max_n_Min(Real* arr, int num_elem){
-	int i;
-	Real max, min;
-	Real* r_arr;
-	r_arr = (Real*)malloc(sizeof(Real)*2);
-	max = min = arr[0];
-	for(i = 1; i < num_elem; ++i){
-		if(arr[i] > max) max = arr[i];
-		if(arr[i] < min) min = arr[i];
-	}
-	r_arr[0] = max;
-	r_arr[1] = min;
-	return r_arr;
-
-}
-
 int
 main(int argc, char** argv)
 {
@@ -76,7 +38,10 @@ main(int argc, char** argv)
 		return 1;
 	}
 
+	/* problem size */
 	n  = atoi(argv[1]);
+
+	/* number of runs */
 	num_of_runs = atoi(argv[2]);
 	
 	#ifdef HAVE_MPI
@@ -86,31 +51,21 @@ main(int argc, char** argv)
 	#endif		
 	 
 	if(rank == 0) wtimes = (Real*)malloc(sizeof(Real)*num_of_runs);
-	for(i = 0; i < num_of_runs; ++i){
-		t1 = WallTime();
+
+	for (i = 0; i < num_of_runs; ++i) {
+		t1 = wall_time();
 		umax = poisson_parallel(n, f ,u);	
-		t2 = WallTime();
-		if(rank == 0){
-			printf("run %d, time=%.15e, umax=%.15e\n", i, t2-t1, umax);
+		t2 = wall_time();
+		if (rank == 0) {
+			printf("Run: %d\t Time: %.16e\tUmax: %.16e\n", i, t2-t1, umax);
 			wtimes[i] = t2- t1;
 		}
 	}
 	
 
 	/* find avarage walltime */
-	if(rank == 0){
-		int i;
-		Real sum;
-		Real max, min;
-		max = min = wtimes[0];
-		sum = wtimes[0];
-		for(i = 1; i < num_of_runs; ++i){
-			if(wtimes[i] > max) max = wtimes[i];
-			if(wtimes[i] < min) min = wtimes[i];
-			sum += wtimes[i];
-		}
-		sum = sum - max - min;
-		printf("average time: %.15e\n", sum/(num_of_runs-2));
+	if (rank == 0) {
+ 		printf("Average Time: %.16e\n", get_average(wtimes, num_of_runs, OUTLIERS_CUTOFF));		
 	}
 	
 	#ifdef HAVE_MPI

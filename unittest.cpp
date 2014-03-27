@@ -435,6 +435,38 @@ TEST(get_offest, combined)
 
 }
 
+TEST(get_average, nocut)
+{
+	Real *a = (Real*)malloc(sizeof(Real) * 3);
+	a[0] = 1.0;
+	a[1] = 2.0;
+	a[2] = 3.0;
+	ASSERT_FLOAT_EQ(2.0, get_average(a, 3, 0));
+}
+TEST(get_average, cut)
+{
+	Real a[4] = {1.0, 3.0, 4.0, 5.0};
+	ASSERT_FLOAT_EQ(3.25, get_average(a, 4, 0));
+	ASSERT_FLOAT_EQ(3.5, get_average(a, 4, 1));
+}
+
+TEST(get_average, real_case)
+{
+	Real a[10];
+	a[0] = 8.869202136993408e-01;
+	a[1] = 8.761560916900635e-01;
+	a[2] = 8.985979557037354e-01;
+	a[3] = 8.984057903289795e-01;
+	a[4] = 8.855299949645996e-01;
+	a[5] = 8.689241409301758e-01;
+	a[6] = 8.959980010986328e-01;
+	a[7] = 8.742067813873291e-01;
+	a[8] = 8.964829444885254e-01;
+	a[9] = 8.762879371643066e-01;
+	ASSERT_FLOAT_EQ(0.8862291972, get_average(a, 10, 2));
+	
+}
+
 /*
  * Main function
  * Runs all tests
