@@ -202,7 +202,8 @@ create_sizes(int m, const int num_ranks)
 /*
  * Create s count array
  * This function will calculate how much data the current rank should send to
- * each process.
+ * each process. Each rank element will have the current rank size multiplied
+ * with own size.
  */
 int*
 create_s_count(const int rank, const int num_ranks, const int* sizes)
@@ -287,7 +288,7 @@ create_ownership(const int m, const int* sizes, const int num_ranks)
 
 /*
  * Create send buffer
- * This method will allocate a send bufferarray needed for the MPI Alltoallv.
+ * This method will allocate a send buffer array needed for the MPI Alltoallv.
  * It will place data going to the different ranks according to the s_count
  * and s_displ vector.
  */
@@ -296,35 +297,58 @@ create_send_buffer(Real **b_part, const int m, const int *sizes,
 		const int rank, const int num_ranks, const int *s_displ, 
 		const int *s_count)
 {
+	/* loop and index variables */
 	int i, j;
-	int index = 0;
+	int base, inner_rank;
+
+	/* number of rows to send */
 	int num_rows = sizes[rank];
+
+	/* send buffer size, number of rows times the number of columns */
 	int send_buffer_size = m * num_rows;
-	int base;
-	int inner_rank;
+
+	/* allocate send buffer */
 	Real* send_buf = create_real_array(send_buffer_size);
 	
-	// Arne morten
-	int* column_ownership = create_ownership(m, sizes, num_ranks);
+	/* calculate ownership, which rank does eahc column belong to */
+	int *column_ownership = create_ownership(m, sizes, num_ranks);
 
-
+	/*
+	 * Offset book-keeping array, incremented once a rank has received a
+	 * value. Is initialized to 0
+	 */
 	int offsets[num_ranks];
 	#pragma omp parallel for schedule(static) private(i)
 	for(i = 0; i < num_ranks; ++i)
 		offsets[i] = 0;
-	// Arne morten
+	
+
+	/* fill the send buffer */
 	for(i = 0; i < num_rows; i++){
 		for(j = 0; j < m; j++) {
-			/* get rank for current matric element */
+			/* get rank for current matrix row */
 			inner_rank = column_ownership[j];
+
+			/* calculate base address in send buffer, using
+			displacement and offset. offset increased to keep track
+			of that the position is taken */
 			base = s_displ[inner_rank] + (offsets[inner_rank]++);
+
+			/* save the actual value in the send buffer */
 			send_buf[base] = b_part[i][j];
 		}		
 	}
+
+	/* deallocate array */
 	free(column_ownership);
 	return send_buf;	
 }
 
+/*
+ * Reconstruct partial from receive buffer.
+ * This function will (in parallel) reconstruct a partial matrix from a receive
+ * buffer received by MPI_Alltoallv.
+ */
 void
 reconstruct_partial_from_receive_buffer(Real** b_part,
 		const Real* receive_buffer, const int m, const int *sizes,
@@ -333,6 +357,8 @@ reconstruct_partial_from_receive_buffer(Real** b_part,
 	int i, row, col;
 	int current_row_num = sizes[rank];
 	int recv_buf_length = m * current_row_num;
+
+	/* each element maps to a row and column based on integer division */
 	#pragma omp parallel for schedule(static) private(i, row, col)
 	for(i = 0; i < recv_buf_length; i++){
 		row = i % current_row_num;
@@ -341,6 +367,17 @@ reconstruct_partial_from_receive_buffer(Real** b_part,
 	}
 }
 
+/*
+ * Get offset
+ * Will calculate the row offset for the given rank.
+ *
+ * EXAMPLE
+ * If we have three ranks with 10 rows each, each rank will have the following
+ * offsets:
+ *	r0 - 0
+ *	r1 - 10
+ *	r2 - 20
+ */
 int
 get_offset(const int rank, const int *sizes)
 {
