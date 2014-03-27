@@ -523,7 +523,7 @@ poisson_parallel(int n, function2D f, function2D u)
 
 	/* helper structure for fst */
 	// Arne morten, lurt å lage denne 2d for openmp?
-	Real** z = create_real_2d_array(sizes[rank], nn);
+	Real** z = create_real_2d_array(omp_get_max_threads(), nn);
 
 	/* allocate needed data structures */
 	Real **b_part = create_real_2d_array(sizes[rank], m);
@@ -543,14 +543,14 @@ poisson_parallel(int n, function2D f, function2D u)
 
 	#pragma omp parallel for schedule(static) private(i) 
 	for (i = 0; i < sizes[rank]; ++i) {
-		fst_(b_part[i], &n, z[i], &nn);
+		fst_(b_part[i], &n, z[omp_get_thread_num()], &nn);
 	}
 	
 	transpose_part(bt_part, b_part, m, sizes, rank, num_ranks, s_displ, s_count);
 		
 	#pragma omp parallel for schedule(static) private(i) 
 	for (i = 0; i < sizes[rank]; ++i) {
-		fstinv_(bt_part[i], &n, z[i], &nn);
+		fstinv_(bt_part[i], &n, z[omp_get_thread_num()], &nn);
 	}
 
 	/* step 2 */
@@ -564,14 +564,14 @@ poisson_parallel(int n, function2D f, function2D u)
 	/* step 3 */
 	#pragma omp parallel for schedule(static) private(i) 
 	for (i = 0; i < sizes[rank]; ++i) {
-		fst_(bt_part[i], &n, z[i], &nn);
+		fst_(bt_part[i], &n, z[omp_get_thread_num()], &nn);
 	}
 	
 	transpose_part(b_part, bt_part, m, sizes, rank, num_ranks, s_displ, s_count);
 	
 	#pragma omp parallel for schedule(static) private(i) 
 	for (i = 0; i < sizes[rank]; ++i) {
-		fstinv_(b_part[i], &n, z[i], &nn);
+		fstinv_(b_part[i], &n, z[omp_get_thread_num()], &nn);
 	}
 
 	/* calculate u_max */
