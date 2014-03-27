@@ -346,7 +346,6 @@ get_offset(const int rank, const int *sizes)
 {
 	int offset, i;
 	offset = 0;
-	// Arne morten
 	for (i = 0; i < rank; ++i) {
 		offset += sizes[i];
 	}
@@ -412,6 +411,13 @@ poisson_parallel(int n, function2D f, function2D u)
 	Real x, y;
 	int m = n - 1;
 	int nn = 4 * n;
+
+	#include <omp.h>
+	/*
+	 * omp_get_max_threads() - tilgjengelig
+	 * omp_get_num_threads() - innsiden
+	 * omp_get_thread_num() - "thread rank"
+	 */
 
 
 	/* mpi */
