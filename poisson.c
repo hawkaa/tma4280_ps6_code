@@ -57,7 +57,7 @@ main(int argc, char** argv)
 		umax = poisson_parallel(n, f ,u);	
 		t2 = wall_time();
 		if (rank == 0) {
-			printf("Run: %d\t Time: %.16e\tUmax: %.16e\n", i, t2-t1, umax);
+			printf("Run: %d\t Time: %.25e\tUmax: %.25e\n", i, t2-t1, umax);
 			wtimes[i] = t2- t1;
 		}
 	}
@@ -65,7 +65,7 @@ main(int argc, char** argv)
 
 	/* find avarage walltime */
 	if (rank == 0) {
- 		printf("Average Time: %.16e\n", get_average(wtimes, num_of_runs, OUTLIERS_CUTOFF));		
+ 		printf("Average Time: %.25e\n", get_average(wtimes, num_of_runs, OUTLIERS_CUTOFF));		
 	}
 	
 	#ifdef HAVE_MPI

@@ -78,7 +78,7 @@ main(int argc, char** argv)
 		u_max = poisson_parallel(j, *f, *u);
 		if (rank == 0) {
 			/* only rank 0 have valid result, and will print to file */
-			printf("%i\t%.16e\n", j, u_max);
+			printf("%i\t%.25e\n", j, u_max);
 		}
 	}
 
