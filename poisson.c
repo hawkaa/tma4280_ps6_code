@@ -50,15 +50,12 @@ main(int argc, char** argv)
 	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 	#endif		
 	 
-	if(rank == 0) wtimes = (Real*)malloc(sizeof(Real)*num_of_runs);
+	wtimes = (Real*)malloc(sizeof(Real)*num_of_runs);
 
 	for (i = 0; i < num_of_runs; ++i) {
-		t1 = wall_time();
-		umax = poisson_parallel(n, f ,u);	
-		t2 = wall_time();
+		umax = poisson_parallel(n, &wtimes[i], f ,u);	
 		if (rank == 0) {
-			printf("Run: %d\t Time: %.25e\tUmax: %.25e\n", i, t2-t1, umax);
-			wtimes[i] = t2- t1;
+			printf("Run: %d\t Time: %.25e\tUmax: %.25e\n", i, wtimes[i], umax);
 		}
 	}
 	

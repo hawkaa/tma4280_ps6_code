@@ -42,7 +42,7 @@ fstinv_(Real *v, int *n, Real *w, int *nn);
  */
 
 extern Real
-poisson_parallel(int problem_size, function2D f, function2D u);
+poisson_parallel(int problem_size, Real *time, function2D f, function2D u);
 
 extern Real
 poisson(int problem_size, function2D f, function2D u);

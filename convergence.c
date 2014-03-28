@@ -75,7 +75,7 @@ main(int argc, char** argv)
 	/* iterating over different problem sizes */
 	for (i = n_min; i <= n_max; ++i) {
 		j = pow(2, i);
-		u_max = poisson_parallel(j, *f, *u);
+		u_max = poisson_parallel(j, NULL, *f, *u);
 		if (rank == 0) {
 			/* only rank 0 have valid result, and will print to file */
 			printf("%i\t%.25e\n", j, u_max);

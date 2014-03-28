@@ -95,6 +95,7 @@ create_diagonal(const int m, const int n)
 	Real *d = create_real_array(m);
 
 	/* fill in data */
+	#pragma omp parallel for private(i)
 	for (i = 0; i < m; ++i) {
 		d[i] = 2.0 * (1.0 - cos((i + 1) * pi / (Real)n));
 	}
@@ -116,7 +117,6 @@ create_real_array(const int n)
 	a = (Real *)malloc(n*sizeof(Real));
 
 	/* initialize with OMP (if available) */
-	#pragma omp parallel for schedule(static) private(i)
 	for (i=0; i < n; i++) {
 		a[i] = 0.0;
 	}
@@ -214,8 +214,6 @@ create_s_count(const int rank, const int num_ranks, const int* sizes)
 	/* allocate array */
 	int* s_count = (int*)malloc(sizeof(int) * num_ranks);
 
-	/* can be done in parallel */
-	#pragma omp parallel for schedule(static) private(i)
 	for (i = 0; i < num_ranks; i++) {
 		s_count[i] = sizes[rank] * sizes[i];	
 	}
@@ -318,7 +316,8 @@ create_send_buffer(Real **b_part, const int m, const int *sizes,
 	 * value. Is initialized to 0
 	 */
 	int offsets[num_ranks];
-	#pragma omp parallel for schedule(static) private(i)
+
+
 	for(i = 0; i < num_ranks; ++i)
 		offsets[i] = 0;
 	
@@ -482,7 +481,7 @@ wall_time ()
  * Only rank 0 will have valid result
  */
 Real
-poisson_parallel(int n, function2D f, function2D u)
+poisson_parallel(int n, Real *time, function2D f, function2D u)
 {
 	
 	/* vector and matrix structures */
@@ -491,6 +490,7 @@ poisson_parallel(int n, function2D f, function2D u)
 	Real x, y;
 	int m = n - 1;
 	int nn = 4 * n;
+	Real t1, t2;
 
 	#include <omp.h>
 	/*
@@ -528,7 +528,9 @@ poisson_parallel(int n, function2D f, function2D u)
 	/* allocate needed data structures */
 	Real **b_part = create_real_2d_array(sizes[rank], m);
 	Real **bt_part = create_real_2d_array(sizes[rank], m);
-
+	
+	MPI_Barrier(MPI_COMM_WORLD);
+	t1 = wall_time();
 	
 	/* fill out initial data */
 	#pragma omp parallel for schedule(static) private(i, j, x, y) 
@@ -560,25 +562,33 @@ poisson_parallel(int n, function2D f, function2D u)
 	for (i = 0; i < sizes[rank]; ++i) {
 		fstinv_(b_part[i], &n, z[omp_get_thread_num()], &nn);
 	}
-//	/* calculate u_max */
-//	Real sum;
-//	Real u_max = 0.0;
-//	// arne morten
-//	//#pragma omp parallel for schedule(static) private(i, j, x, y)
-//	for (i = 0; i < sizes[rank]; ++i) {
-//		for (j = 0; j < m; ++j) {
-//			x = (Real)(j + 1) / (Real)(n);
-//			y = (Real)(i + offset + 1) / (Real)(n);
-//			sum = fabs((*u)(x, y) - b_part[i][j]);
-//			//#pragma omp critical
-//			if (sum > u_max) {
-//				u_max = sum;
-//			}
-//		}
-//	}
-//	Real u_max_rank_0 = -1;
-//
-//	MPI_Reduce(&u_max, &u_max_rank_0, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
+	
+
+	MPI_Barrier(MPI_COMM_WORLD);
+	t2 = wall_time();
+
+	if (time != NULL)
+		*time = t2 - t1;
+
+	/* calculate u_max */
+	Real sum;
+	Real u_max = 0.0;
+	// arne morten
+	//#pragma omp parallel for schedule(static) private(i, j, x, y)
+	for (i = 0; i < sizes[rank]; ++i) {
+		for (j = 0; j < m; ++j) {
+			x = (Real)(j + 1) / (Real)(n);
+			y = (Real)(i + offset + 1) / (Real)(n);
+			sum = fabs((*u)(x, y) - b_part[i][j]);
+			//#pragma omp critical
+			if (sum > u_max) {
+				u_max = sum;
+			}
+		}
+	}
+	Real u_max_rank_0 = -1;
+
+	MPI_Reduce(&u_max, &u_max_rank_0, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
 	
 	/* clean up */
 	free_real_2d_array(b_part);
@@ -589,8 +599,7 @@ poisson_parallel(int n, function2D f, function2D u)
 	free(s_count);
 	free(s_displ);
 
-	return 0.0;
-	//return u_max_rank_0;
+	return u_max_rank_0;
 }
 /*
  * Poisson solver.
