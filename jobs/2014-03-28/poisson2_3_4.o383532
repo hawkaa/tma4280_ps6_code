@@ -1,0 +1,11 @@
+=>> PBS: job killed: node 2 (compute-1-0) requested job terminate, 'EOF' (code 1099) - received SISTER_EOF attempting to communicate with sister MOM's
+mpirun: killing job...
+
+--------------------------------------------------------------------------
+mpirun was unable to cleanly terminate the daemons on the nodes shown
+below. Additional manual cleanup may be required - please refer to
+the "orte-clean" tool for assistance.
+--------------------------------------------------------------------------
+	compute-1-8
+	compute-1-0
+ssh: connect to host compute-1-0 port 22: No route to host
