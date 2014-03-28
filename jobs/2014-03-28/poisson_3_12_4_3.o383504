@@ -1,0 +1,15 @@
+Warning: Permanently added 'compute-0-18' (RSA) to the list of known hosts.
+chown: cannot access `/state/partition1/scratch/pbstmp.383504.rocks.hpc.ntnu.no': No such file or directory
+Warning: Permanently added 'compute-0-33' (RSA) to the list of known hosts.
+Warning: Permanently added 'compute-0-5' (RSA) to the list of known hosts.
+Run: 0	 Time: 6.5879518032073975e+01	Umax: 8.8874678727535183e-09
+Run: 1	 Time: 6.6391132116317749e+01	Umax: 8.8874678727535183e-09
+Run: 2	 Time: 1.0894818091392517e+02	Umax: 8.8874678727535183e-09
+Run: 3	 Time: 6.7197422027587891e+01	Umax: 8.8874678727535183e-09
+Run: 4	 Time: 6.6917850017547607e+01	Umax: 8.8874678727535183e-09
+Run: 5	 Time: 6.8355191946029663e+01	Umax: 8.8874678727535183e-09
+Run: 6	 Time: 6.4887870073318481e+01	Umax: 8.8874678727535183e-09
+Run: 7	 Time: 6.6139199018478394e+01	Umax: 8.8874678727535183e-09
+Run: 8	 Time: 6.6245095968246460e+01	Umax: 8.8874678727535183e-09
+Run: 9	 Time: 1.6106451296806335e+02	Umax: 8.8874678727535183e-09
+Average Time: 6.6874315182367965e+01

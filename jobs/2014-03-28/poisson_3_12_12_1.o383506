@@ -1,0 +1,14 @@
+Warning: Permanently added 'compute-0-11' (RSA) to the list of known hosts.
+Warning: Permanently added 'compute-0-2' (RSA) to the list of known hosts.
+Warning: Permanently added 'compute-0-9' (RSA) to the list of known hosts.
+Run: 0	 Time: 4.6086465120315552e+01	Umax: 8.8874678727535183e-09
+Run: 1	 Time: 4.6154213905334473e+01	Umax: 8.8874678727535183e-09
+Run: 2	 Time: 4.6284123897552490e+01	Umax: 8.8874678727535183e-09
+Run: 3	 Time: 4.7742129087448120e+01	Umax: 8.8874678727535183e-09
+Run: 4	 Time: 4.6428630828857422e+01	Umax: 8.8874678727535183e-09
+Run: 5	 Time: 4.5945712089538574e+01	Umax: 8.8874678727535183e-09
+Run: 6	 Time: 4.6029847145080566e+01	Umax: 8.8874678727535183e-09
+Run: 7	 Time: 4.5998079061508179e+01	Umax: 8.8874678727535183e-09
+Run: 8	 Time: 4.6269376039505005e+01	Umax: 8.8874678727535183e-09
+Run: 9	 Time: 4.6083178043365479e+01	Umax: 8.8874678727535183e-09
+Average Time: 4.6151200691858925e+01

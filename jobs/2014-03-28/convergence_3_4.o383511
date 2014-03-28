@@ -1,0 +1,16 @@
+chown: cannot access `/state/partition1/scratch/pbstmp.383511.rocks.hpc.ntnu.no': No such file or directory
+chown: cannot access `/state/partition1/scratch/pbstmp.383511.rocks.hpc.ntnu.no': No such file or directory
+# Convergence test for Problem Set 6 poisson solver
+# Problem Size	Absolute error
+8	4.4761850924579960e-02
+16	1.0989314920691440e-02
+32	2.7349548325132922e-03
+64	6.8296839376302820e-04
+128	1.7069400140279356e-04
+256	4.2670494998287012e-05
+512	1.0667435174083195e-05
+1024	2.6668466539536695e-06
+2048	6.6670920562117431e-07
+4096	1.6666193958236875e-07
+8192	4.1499220504448431e-08
+16384	8.8874678727535183e-09
