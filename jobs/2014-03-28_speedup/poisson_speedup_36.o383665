@@ -1,0 +1,18 @@
+chown: cannot access `/state/partition1/scratch/pbstmp.383665.rocks.hpc.ntnu.no': No such file or directory
+Warning: Permanently added 'compute-1-3' (RSA) to the list of known hosts.
+chown: cannot access `/state/partition1/scratch/pbstmp.383665.rocks.hpc.ntnu.no': No such file or directory
+Warning: Permanently added 'compute-1-5' (RSA) to the list of known hosts.
+# Speedup test for Problem Set 6 poisson solver
+# Problem Size	Time
+8	2.4684270222981769026329713e-04
+16	9.6925099690755211947340575e-04
+32	3.5668611526489257812500000e-03
+64	5.1722923914591474245372460e-03
+128	5.4072141647338867187500000e-03
+256	7.6271692911783857057872460e-03
+512	3.9980292320251464843750000e-02
+1024	1.4771485328674316406250000e-01
+2048	7.3071479797363281250000000e-01
+4096	1.8810482819875080640059650e+00
+8192	7.7959264119466142872738601e+00
+16384	3.2741209824879966561184119e+01

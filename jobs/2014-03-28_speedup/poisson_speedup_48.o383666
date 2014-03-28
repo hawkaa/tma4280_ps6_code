@@ -1,0 +1,40 @@
+chown: cannot access `/state/partition1/scratch/pbstmp.383666.rocks.hpc.ntnu.no': No such file or directory
+# Speedup test for Problem Set 6 poisson solver
+# Problem Size	Time
+8	4.3066342671712237776329713e-04
+16	9.4668070475260413052659425e-04
+32	4.9231847127278642942127540e-03
+64	1.8492607275644937225855813e-01
+128	3.1509049733479815857961626e-01
+256	3.4932899475097656250000000e-01
+512	2.0129958788553874854398984e-02
+1024	7.9108675320943191988654064e-02
+2048	6.4022342363993323122173251e-01
+4096	1.8356982866923015063065350e+00
+mpirun: killing job...
+
+--------------------------------------------------------------------------
+mpirun noticed that process rank 0 with PID 29450 on node compute-0-12.local exited on signal 0 (Unknown signal 0).
+--------------------------------------------------------------------------
+[compute-0-9.local][[16915,1],27][btl_tcp_frag.c:214:mca_btl_tcp_frag_recv] mca_btl_tcp_frag_recv: readv failed: Connection reset by peer (104)
+[compute-0-9.local][[16915,1],27][btl_tcp_frag.c:214:mca_btl_tcp_frag_recv] mca_btl_tcp_frag_recv: readv failed: Connection reset by peer (104)
+[compute-0-9.local][[16915,1],27][btl_tcp_frag.c:214:mca_btl_tcp_frag_recv] mca_btl_tcp_frag_recv: readv failed: Connection reset by peer (104)
+[compute-0-9.local][[16915,1],27][btl_tcp_frag.c:214:mca_btl_tcp_frag_recv] mca_btl_tcp_frag_recv: readv failed: Connection reset by peer (104)
+mpirun: clean termination accomplished
+
+48 total processes killed (some possibly by mpirun during cleanup)
+chown: cannot access `/state/partition1/scratch/pbstmp.383666.rocks.hpc.ntnu.no': No such file or directory
+# Speedup test for Problem Set 6 poisson solver
+# Problem Size	Time
+8	3.7860870361328125000000000e-04
+16	9.6750259399414062500000000e-04
+32	3.6849975585937500000000000e-03
+64	2.5252703825632732970163374e-01
+128	2.1731261412302652069605813e-01
+256	2.3786004384358724883519187e-01
+512	1.9909461339314777489351016e-02
+1024	7.9028129577636718750000000e-02
+2048	6.1455408732096350465923251e-01
+4096	1.8281632661819458007812500e+00
+8192	6.6885379552841186523437500e+00
+16384	2.5546354532241821289062500e+01
