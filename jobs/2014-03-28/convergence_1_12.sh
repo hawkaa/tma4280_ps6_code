@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Name job 'poisson'
-#PBS -N poisson_3_12_1_12_convergence
+#PBS -N convergence_1_12
 
 # Allocate two nodes with 12 processors from the default resources
 #PBS -lnodes=3:ppn=12:default
