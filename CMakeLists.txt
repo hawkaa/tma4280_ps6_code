@@ -54,6 +54,9 @@ add_executable(poisson poisson.c)
 # The convergence test program
 add_executable(convergence convergence.c)
 
+# The speedup test program
+add_executable(poisson_speedup poisson_speedup.c)
+
 # Unit testing
 add_executable(unittest unittest.cpp)
 add_custom_target(test-unit
@@ -84,5 +87,6 @@ add_custom_target(convergence-plot
 target_link_libraries(ps6_common_library fst ${DEPLIBS_C})
 target_link_libraries(poisson ps6_common_library ${DEPLIBS_C})
 target_link_libraries(convergence ps6_common_library ${DEPLIBS_C})
+target_link_libraries(poisson_speedup ps6_common_library ${DEPLIBS_C})
 target_link_libraries(mpi_unittest ps6_common_library ${DEPLIBS_CXX} gtest gtest_main pthread)
 target_link_libraries(unittest ps6_common_library ${DEPLIBS_CXX} gtest gtest_main pthread)
