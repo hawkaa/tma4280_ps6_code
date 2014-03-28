@@ -10,7 +10,7 @@ enable_language(Fortran)
 # CMake Options to enable/disable MPI and OpenMP
 option(ENABLE_OPENMP "Enable OpenMP support?" ON)
 option(ENABLE_MPI    "Enable MPI support?" ON)
-option(ENABLE_GPROF  "Compile with GPROF support?" ON)
+option(ENABLE_GPROF  "Compile with GPROF support?" OFF)
 
 if(ENABLE_GPROF)
 	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -pg")
