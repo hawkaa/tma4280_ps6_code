@@ -2,5 +2,5 @@
 set logscale xy
 set xlabel "Problem size"
 set ylabel "Absolute error"
-plot filename smooth unique, 1 / x**2
+plot umax smooth unique, 1 / x**2
 pause -1
