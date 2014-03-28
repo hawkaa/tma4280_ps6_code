@@ -539,60 +539,46 @@ poisson_parallel(int n, function2D f, function2D u)
 			y = (Real)(offset + i + 1) / (Real)(n);
 			b_part[i][j] = h * h * (*f)(x, y);
 		}
-	}
-
-	#pragma omp parallel for schedule(static) private(i) 
-	for (i = 0; i < sizes[rank]; ++i) {
 		fst_(b_part[i], &n, z[omp_get_thread_num()], &nn);
 	}
+
 	
 	transpose_part(bt_part, b_part, m, sizes, rank, num_ranks, s_displ, s_count);
 		
-	#pragma omp parallel for schedule(static) private(i) 
-	for (i = 0; i < sizes[rank]; ++i) {
-		fstinv_(bt_part[i], &n, z[omp_get_thread_num()], &nn);
-	}
-
-	/* step 2 */
 	#pragma omp parallel for schedule(static) private(i, j) 
 	for (i = 0; i < sizes[rank]; ++i) {
+		fstinv_(bt_part[i], &n, z[omp_get_thread_num()], &nn);
 		for (j = 0; j < m; ++j) {
 			bt_part[i][j] = bt_part[i][j]/(diagonal[offset + i]+diagonal[j]);
 		}
-	}
-
-	/* step 3 */
-	#pragma omp parallel for schedule(static) private(i) 
-	for (i = 0; i < sizes[rank]; ++i) {
 		fst_(bt_part[i], &n, z[omp_get_thread_num()], &nn);
 	}
-	
+
 	transpose_part(b_part, bt_part, m, sizes, rank, num_ranks, s_displ, s_count);
 	
 	#pragma omp parallel for schedule(static) private(i) 
 	for (i = 0; i < sizes[rank]; ++i) {
 		fstinv_(b_part[i], &n, z[omp_get_thread_num()], &nn);
 	}
-
-	/* calculate u_max */
-	Real sum;
-	Real u_max = 0.0;
-	// arne morten
-	//#pragma omp parallel for schedule(static) private(i, j, x, y)
-	for (i = 0; i < sizes[rank]; ++i) {
-		for (j = 0; j < m; ++j) {
-			x = (Real)(j + 1) / (Real)(n);
-			y = (Real)(i + offset + 1) / (Real)(n);
-			sum = fabs((*u)(x, y) - b_part[i][j]);
-			//#pragma omp critical
-			if (sum > u_max) {
-				u_max = sum;
-			}
-		}
-	}
-	Real u_max_rank_0 = -1;
-
-	MPI_Reduce(&u_max, &u_max_rank_0, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
+//	/* calculate u_max */
+//	Real sum;
+//	Real u_max = 0.0;
+//	// arne morten
+//	//#pragma omp parallel for schedule(static) private(i, j, x, y)
+//	for (i = 0; i < sizes[rank]; ++i) {
+//		for (j = 0; j < m; ++j) {
+//			x = (Real)(j + 1) / (Real)(n);
+//			y = (Real)(i + offset + 1) / (Real)(n);
+//			sum = fabs((*u)(x, y) - b_part[i][j]);
+//			//#pragma omp critical
+//			if (sum > u_max) {
+//				u_max = sum;
+//			}
+//		}
+//	}
+//	Real u_max_rank_0 = -1;
+//
+//	MPI_Reduce(&u_max, &u_max_rank_0, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
 	
 	/* clean up */
 	free_real_2d_array(b_part);
@@ -603,7 +589,8 @@ poisson_parallel(int n, function2D f, function2D u)
 	free(s_count);
 	free(s_displ);
 
-	return u_max_rank_0;
+	return 0.0;
+	//return u_max_rank_0;
 }
 /*
  * Poisson solver.
