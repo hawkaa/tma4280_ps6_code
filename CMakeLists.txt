@@ -51,6 +51,9 @@ add_library(fst fst.f)
 # The C based poisson application
 add_executable(poisson poisson.c)
 
+# The original poisson application
+add_executable(poisson_orig poisson_orig.c)
+
 # The convergence test program
 add_executable(convergence convergence.c)
 
@@ -74,16 +77,20 @@ add_custom_target(test-mpi
 
 # Create the plot file
 add_custom_command(OUTPUT convergence_plot_data.tmp
-		COMMAND mpirun -np 8 $(CMAKE_BINARY_DIR)/convergence 3 11 > convergence_plot_data.tmp
+		COMMAND mpirun -np 8 $(CMAKE_BINARY_DIR)/convergence 3 9 > convergence_plot_data.tmp
 		DEPENDS convergence
 		COMMENT "Needed to create plot data")
 
 add_custom_target(convergence-plot
-		COMMAND gnuplot -e \"filename='convergence_plot_data.tmp'\" ${CMAKE_SOURCE_DIR}/convergence.plg
+		COMMAND gnuplot -e \"umax='convergence_plot_data.tmp'\" ${CMAKE_SOURCE_DIR}/convergence.plg
 		DEPENDS convergence_plot_data.tmp
 		)
 
+# We want to link this as a C program
+set_target_properties(poisson_orig PROPERTIES LINKER_LANGUAGE C)
+
 # Link to libraries
+target_link_libraries(poisson_orig fst ${DEPLIBS_C})
 target_link_libraries(ps6_common_library fst ${DEPLIBS_C})
 target_link_libraries(poisson ps6_common_library ${DEPLIBS_C})
 target_link_libraries(convergence ps6_common_library ${DEPLIBS_C})

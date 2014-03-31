@@ -579,6 +579,7 @@ poisson_parallel(int n, Real *time, function2D f, function2D u)
 		for (j = 0; j < m; ++j) {
 			x = (Real)(j + 1) / (Real)(n);
 			y = (Real)(i + offset + 1) / (Real)(n);
+			//printf("Correct value: %.20e \t Estimate: %.20e \n", (*u)(x, y), b_part[i][j]);
 			sum = fabs((*u)(x, y) - b_part[i][j]);
 			//#pragma omp critical
 			if (sum > u_max) {
@@ -608,7 +609,7 @@ poisson_parallel(int n, Real *time, function2D f, function2D u)
  * Only rank 0 will have valid result
  */
 Real
-poisson(int n, function2D f, function2D u)
+poisson(int n, Real *time, function2D f, function2D u)
 {
 	
 	/* vector and matrix structures */
