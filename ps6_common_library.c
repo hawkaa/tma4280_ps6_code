@@ -41,6 +41,7 @@
 
 /*
  * INTERNAL METHODS
+ * Helper methods for the ps6_common_library.c.
  */
 
 /*
@@ -159,7 +160,7 @@ free_real_2d_array(Real** arr)
 
 /*
  * Create sizes array
- * Will calculate how many rows each rank should own.
+ * Will calculate how many rows each rank own.
  */
 int*
 create_sizes(int m, const int num_ranks)
@@ -316,8 +317,6 @@ create_send_buffer(Real **b_part, const int m, const int *sizes,
 	 * value. Is initialized to 0
 	 */
 	int offsets[num_ranks];
-
-
 	for(i = 0; i < num_ranks; ++i)
 		offsets[i] = 0;
 	
@@ -369,34 +368,33 @@ reconstruct_partial_from_receive_buffer(Real** b_part,
 /*
  * Get offset
  * Will calculate the row offset for the given rank.
- *
- * EXAMPLE
- * If we have three ranks with 10 rows each, each rank will have the following
- * offsets:
- *	r0 - 0
- *	r1 - 10
- *	r2 - 20
  */
 int
 get_offset(const int rank, const int *sizes)
 {
 	int offset, i;
 	offset = 0;
+	/* accumulate sizes up to current rank */
 	for (i = 0; i < rank; ++i) {
 		offset += sizes[i];
 	}
 	return offset;
 }
 
+/*
+ * Create partial matrix
+ * Will construct a partial matrix based on b. It will use the processor rank
+ * to calculate which rows belongs to the partial matrix.
+ */
 Real**
 create_part_matrix(Real** b, const int m, const int rank, const int *sizes)
 {
-	Real** b_return;
-	int offset, i, j;
+	int i, j;
 	
-	b_return = create_real_2d_array(sizes[rank], m);
-	offset = get_offset(rank, sizes);
+	Real** b_return = create_real_2d_array(sizes[rank], m);
+	int offset = get_offset(rank, sizes);
 	for (i = 0; i < sizes[rank]; ++i) {
+		/* copy the given rows into the partial matrix */
 		memcpy(b_return[i], b[i+offset], sizeof(Real) * m);
 	}
 
@@ -405,11 +403,12 @@ create_part_matrix(Real** b, const int m, const int rank, const int *sizes)
 
 /*
  * Transpose partial matrix 
- * This function will set up send- and receive buffers and receive a transposed
- * partial matrix 
+ * This function will set up send buffer with the contents of b_part, allocate
+ * a receive buffer and reconstruct the transposed matrix into bt_part.
  */
 void
-transpose_part(Real **bt_part, Real **b_part, int m, int *sizes, int rank, int num_ranks, int* s_displ, int* s_count)
+transpose_part(Real **bt_part, Real **b_part, int m, int *sizes, int rank,
+		int num_ranks, int* s_displ, int* s_count)
 {
 
 	Real* send_buf = create_send_buffer(b_part, m, sizes, rank, num_ranks,
@@ -428,9 +427,8 @@ transpose_part(Real **bt_part, Real **b_part, int m, int *sizes, int rank, int n
 }
 
 /*
- * UTILITY METHODS
+ * Compare real function used for qsort int get_average
  */
-
 static int
 compare_real (const void * a, const void * b)
 {
@@ -439,15 +437,33 @@ compare_real (const void * a, const void * b)
 	if (*(Real*)a > *(Real*)b) return 1;
 }
 
+/*
+ * UTILITY METHODS
+ * These functions should be used from other modules, but are only thought
+ * of as utility, and has no side effects regarding use of OpenMP and MPI.
+ */
+
+
+/*
+ * Get average with cutoff
+ * This funciton will return the average of a list with Real, removing 
+ * 2*cutoff outliers.
+ */
 Real
 get_average(Real *arr, int n, int cutoff)
 {
 	int i;
+	
+	/* sort the values */
 	qsort(arr, n, sizeof(Real), &compare_real);	
+
+	/* sum the elements, exclude outliers */
 	Real sum = 0.0;
 	for (i = cutoff; i < n - cutoff; ++i) {
 		sum += arr[i];
 	}
+
+	/* calculate and return average */
 	return sum / (n - 2 * cutoff);
 }
 
@@ -472,11 +488,14 @@ wall_time ()
 
 /*
  * ENTRY METHODS
+ * Here comes the methods that should be called from outside
+ * Function names suffixed with "_parallel" should be called from all
+ * processors in an MPI setting, but only rank 0 will have a valid result.
  */
 
 /*
- * Poisson solver.
- * Will return max error
+ * Parallel poisson solver.
+ * Will return max error if reference function u is present
  * Should be called from all processes
  * Only rank 0 will have valid result
  */
@@ -485,22 +504,15 @@ poisson_parallel(int n, Real *time, function2D f, function2D u)
 {
 	
 	/* vector and matrix structures */
-
 	int i, j;
 	Real x, y;
 	int m = n - 1;
 	int nn = 4 * n;
 	Real t1, t2;
 
-	#include <omp.h>
-	/*
-	 * omp_get_max_threads() - tilgjengelig
-	 * omp_get_num_threads() - innsiden
-	 * omp_get_thread_num() - "thread rank"
-	 */
 
 
-	/* mpi */
+	/* mpi variables */
 	int rank, num_ranks;
 	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 	MPI_Comm_size(MPI_COMM_WORLD, &num_ranks);
@@ -518,35 +530,40 @@ poisson_parallel(int n, Real *time, function2D f, function2D u)
 	int offset = get_offset(rank, sizes);
 
 	/* diagonal, same diagonal generated for all */
-	// Arne morten, lurt å lage hele for hver prosess?
 	Real* diagonal = create_diagonal(m, n);
 
 	/* helper structure for fst */
-	// Arne morten, lurt å lage denne 2d for openmp?
 	Real** z = create_real_2d_array(omp_get_max_threads(), nn);
 
 	/* allocate needed data structures */
 	Real **b_part = create_real_2d_array(sizes[rank], m);
 	Real **bt_part = create_real_2d_array(sizes[rank], m);
-	
+
+	/* add a barrier to improve accuracy in timing */
 	MPI_Barrier(MPI_COMM_WORLD);
+
+	/* note start time */
 	t1 = wall_time();
 	
 	/* fill out initial data */
 	#pragma omp parallel for schedule(static) private(i, j, x, y) 
 	for (i = 0; i < sizes[rank]; ++i) {
-		//printf("[Rank %i] Global %i, Local %i\n", rank, offset + i, i);
 		for (j = 0; j < m; ++j) {
+			/* map local indexes to x and y values */
 			x = (Real)(j + 1) / (Real)(n);
 			y = (Real)(offset + i + 1) / (Real)(n);
 			b_part[i][j] = h * h * (*f)(x, y);
 		}
+		/* perform fast sine transform */
 		fst_(b_part[i], &n, z[omp_get_thread_num()], &nn);
 	}
 
+	/* transpose b_part, and get a transposed partial matrix loaded into
+	 bt_part */
+	transpose_part(bt_part, b_part, m, sizes, rank, num_ranks, s_displ, 
+			s_count);
 	
-	transpose_part(bt_part, b_part, m, sizes, rank, num_ranks, s_displ, s_count);
-		
+	/* new openMP fork */
 	#pragma omp parallel for schedule(static) private(i, j) 
 	for (i = 0; i < sizes[rank]; ++i) {
 		fstinv_(bt_part[i], &n, z[omp_get_thread_num()], &nn);
@@ -555,7 +572,8 @@ poisson_parallel(int n, Real *time, function2D f, function2D u)
 		}
 		fst_(bt_part[i], &n, z[omp_get_thread_num()], &nn);
 	}
-
+	
+	/* transpose the matrix back again, now b_part will have the interesting content */
 	transpose_part(b_part, bt_part, m, sizes, rank, num_ranks, s_displ, s_count);
 	
 	#pragma omp parallel for schedule(static) private(i) 
@@ -563,32 +581,38 @@ poisson_parallel(int n, Real *time, function2D f, function2D u)
 		fstinv_(b_part[i], &n, z[omp_get_thread_num()], &nn);
 	}
 	
-
+	
+	/* register the time after all processes are done */
 	MPI_Barrier(MPI_COMM_WORLD);
 	t2 = wall_time();
-
+	
+	/* save time at the time pointer location (if present) */
 	if (time != NULL)
 		*time = t2 - t1;
 
-	/* calculate u_max */
+	/* if we have no reference function, return invalid value */
+	if (u == NULL) {
+		return -1;
+	}
+
+	/* since we have a reference function, we need to calculate the maximum
+	error */
 	Real sum;
 	Real u_max = 0.0;
-	// arne morten
-	//#pragma omp parallel for schedule(static) private(i, j, x, y)
+
 	for (i = 0; i < sizes[rank]; ++i) {
 		for (j = 0; j < m; ++j) {
 			x = (Real)(j + 1) / (Real)(n);
 			y = (Real)(i + offset + 1) / (Real)(n);
-			//printf("Correct value: %.20e \t Estimate: %.20e \n", (*u)(x, y), b_part[i][j]);
 			sum = fabs((*u)(x, y) - b_part[i][j]);
-			//#pragma omp critical
 			if (sum > u_max) {
 				u_max = sum;
 			}
 		}
 	}
-	Real u_max_rank_0 = -1;
 
+	/* reduce umax to rank 0 */
+	Real u_max_rank_0 = -1;
 	MPI_Reduce(&u_max, &u_max_rank_0, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
 	
 	/* clean up */
@@ -602,11 +626,12 @@ poisson_parallel(int n, Real *time, function2D f, function2D u)
 
 	return u_max_rank_0;
 }
+
 /*
  * Poisson solver.
- * Will return max error
- * Should be called from all processes
- * Only rank 0 will have valid result
+ * Will return max error if reference function u is present.
+ * This function is not documented very well, as it is quite similar to
+ * the parallel implementation.
  */
 Real
 poisson(int n, Real *time, function2D f, function2D u)
@@ -621,13 +646,11 @@ poisson(int n, Real *time, function2D f, function2D u)
 
 	Real pi, h, umax;
 	int i, j,  m, nn;
+	Real t1, t2;
 
 	
 	Real x, y;
 	
-	/* the total number of grid points in each spatial direction is (n+1) */
-	/* the total number of degrees-of-freedom in each spatial direction is (n-1) */
-	/* this version requires n to be a power of 2 */
 	
 	m = n - 1;
 	nn = 4 * n;
@@ -638,13 +661,17 @@ poisson(int n, Real *time, function2D f, function2D u)
 	
 
 	h = 1.0 / (Real)n;
+
+
+	/* note start time */
+	t1 = wall_time();
 	
 	diagonal = create_diagonal(m, n);
-
+	Real x_left, x_right, y_top, y_bottom;
 	for (i = 0; i < m; ++i) {
 		for (j = 0; j < m; ++j) {
-			x = (Real)(j+1) / (Real)(n);
-			y = (Real)(i+1) / (Real)(n);
+			x = (Real)(j + 1) / (Real)(n);
+			y = (Real)(i + 1) / (Real)(n);
 			b[i][j] = h * h * (*f)(x, y);
 		}
 	}
@@ -677,6 +704,17 @@ poisson(int n, Real *time, function2D f, function2D u)
 		fstinv_(b[i], &n, z, &nn);
 	}
 
+
+	t2 = wall_time();
+	
+	/* save time at the time pointer location (if present) */
+	if (time != NULL)
+		*time = t2 - t1;
+
+	if (u == NULL) {
+		return -1;
+	}
+
 	Real sum;
 	umax = 0.0;
 	for (i = 1; i < n; ++i) {
@@ -699,13 +737,14 @@ poisson(int n, Real *time, function2D f, function2D u)
 }
 
 
-
+/*
+ * Transpose
+ * Will transpose b and save it to bt in paralell
+ */
 void
 transpose_parallel(Real **bt, Real **b, int m)
 {
-	#ifdef HAVE_MPI
-	/* spre ut matrise på alle prosesser */
-
+	/* mpi */
 	int rank, num_ranks;	
 	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 	MPI_Comm_size(MPI_COMM_WORLD, &num_ranks);
@@ -718,7 +757,7 @@ transpose_parallel(Real **bt, Real **b, int m)
 	Real** b_part = create_real_2d_array(sizes[rank], m);
 	Real** bt_part = create_real_2d_array(sizes[rank], m);
 
-	/* distribute */
+	/* distribute array row-wise to all ranks */
 	if(rank == 0){	
 		int i;
 		for(i = 1; i < num_ranks; ++i){
@@ -729,10 +768,11 @@ transpose_parallel(Real **bt, Real **b, int m)
 	} else{
 		MPI_Recv(&(b_part[0][0]), m*sizes[rank], MPI_DOUBLE, 0, 100, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 	}
-
+	
+	/* transpose partial array */
 	transpose_part(bt_part, b_part, m, sizes, rank, num_ranks, s_displ, s_count);
 
-	/* samle sammen på p0 og returner */
+	/* gather the result back on rank 0 */
   	if(rank == 0){	
 		int i;
 		for(i = 1; i < num_ranks; i++){
@@ -750,11 +790,12 @@ transpose_parallel(Real **bt, Real **b, int m)
 	free(s_count);
 	free(s_displ);
 	
-	#else
-	transpose(bt, b, m);
-	#endif
 }
 
+/*
+ * Transpose
+ * Saves the transposed b into bt
+ */
 void
 transpose(Real **bt, Real **b, int m)
 {

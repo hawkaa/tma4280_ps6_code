@@ -35,7 +35,7 @@ fstinv_(Real *v, int *n, Real *w, int *nn);
 
 /*
  * ENTRY METHODS
- * Here comes the methods shat should be called from outside
+ * Here comes the methods that should be called from outside
  * Function names suffixed with "_parallel" should be called from all
  * processors in an MPI setting, but only rank 0 will have a valid result.
  * Function documentation resides in ps6_common_library.c
