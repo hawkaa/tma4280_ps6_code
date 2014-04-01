@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
+
 #include "mpi.h"
 
 /* local includes */
@@ -44,11 +45,9 @@ main(int argc, char** argv)
 	/* number of runs */
 	num_of_runs = atoi(argv[2]);
 	
-	#ifdef HAVE_MPI
 	MPI_Init(&argc, &argv);	
 	MPI_Comm_size(MPI_COMM_WORLD, &size);
 	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-	#endif		
 	 
 	wtimes = (Real*)malloc(sizeof(Real)*num_of_runs);
 
@@ -62,12 +61,9 @@ main(int argc, char** argv)
 
 	/* find avarage walltime */
 	if (rank == 0) {
- 		printf("Average Time: %.25e\n", get_average(wtimes, num_of_runs, OUTLIERS_CUTOFF));		
+ 		printf("Average Time: %.25e\n", get_average(wtimes, num_of_runs,
+						OUTLIERS_CUTOFF));		
 	}
-	
-	#ifdef HAVE_MPI
-	MPI_Finalize();
-	#endif
 	
 	return 0;
 
