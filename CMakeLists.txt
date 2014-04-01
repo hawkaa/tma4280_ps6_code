@@ -2,7 +2,7 @@ project(poisson)
 
 cmake_minimum_required(VERSION 2.6)
 
-# We use the C language
+# enable C, C++ and fortran
 enable_language(C)
 enable_language(CXX)
 enable_language(Fortran)
@@ -10,45 +10,48 @@ enable_language(Fortran)
 # CMake Options to enable/disable MPI and OpenMP
 option(ENABLE_OPENMP "Enable OpenMP support?" ON)
 option(ENABLE_MPI    "Enable MPI support?" ON)
+
+# CMake option to enable/disable GPROF support 
 option(ENABLE_GPROF  "Compile with GPROF support?" OFF)
 
 if(ENABLE_GPROF)
+	# Add the -pg flag if gprof enabled
 	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -pg")
 	set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -pg")
 endif()
 
 if(ENABLE_MPI)
-  find_package(MPI)
+  	find_package(MPI)
+	if(MPI_FOUND)
+  		add_definitions(-DHAVE_MPI=1)
+		set(INCLUDES ${INCLUDES} ${MPI_INCLUDE_PATH})
+		set(DEPLIBS_C ${DEPLIBS_C} ${MPI_C_LIBRARIES})
+		set(DEPLIBS_CXX ${DEPLIBS_CXX} ${MPI_CXX_LIBRARIES})
+		set(DEPLIBS_F ${DEPLIBS_F} ${MPI_Fortran_LIBRARIES})
+	endif()
 endif()
 
-if(MPI_FOUND)
-  add_definitions(-DHAVE_MPI=1)
-  set(INCLUDES ${INCLUDES} ${MPI_INCLUDE_PATH})
-  set(DEPLIBS_C ${DEPLIBS_C} ${MPI_C_LIBRARIES})
-  set(DEPLIBS_CXX ${DEPLIBS_CXX} ${MPI_CXX_LIBRARIES})
-  set(DEPLIBS_F ${DEPLIBS_F} ${MPI_Fortran_LIBRARIES})
-endif()
 
 if(ENABLE_OPENMP)
-  find_package(OpenMP)
-  if(OPENMP_FOUND)
-    add_definitions(-DHAVE_OPENMP=1)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
-  endif()
+	find_package(OpenMP)
+	if(OPENMP_FOUND)
+		add_definitions(-DHAVE_OPENMP=1)
+		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
+	endif()
 endif()
 
-# Add gtest
+# Add gtest CMake subdirectory
 add_subdirectory(gtest)
 
-# Send the include directories to the compiler
+# Add our include directory to includes
 include_directories(${INCLUDES} include)
 
 # Add libraries
 add_library(ps6_common_library ps6_common_library.c)
 add_library(fst fst.f)
 
-# The C based poisson application
+# The poisson application
 add_executable(poisson poisson.c)
 
 # The original poisson application
@@ -77,7 +80,7 @@ add_custom_target(test-mpi
 
 # Create the plot file
 add_custom_command(OUTPUT convergence_plot_data.tmp
-		COMMAND mpirun -np 8 $(CMAKE_BINARY_DIR)/convergence 3 9 > convergence_plot_data.tmp
+		COMMAND mpirun -np 8 $(CMAKE_BINARY_DIR)/convergence 3 10 > convergence_plot_data.tmp
 		DEPENDS convergence
 		COMMENT "Needed to create plot data")
 
