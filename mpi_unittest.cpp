@@ -42,8 +42,8 @@ TEST(transpose_parallel, HardCoded)
 		ASSERT_FLOAT_EQ(bt[1][0], 2.0);
 		ASSERT_FLOAT_EQ(bt[1][1], 4.0);
 	}
-	free(b);
-	free(bt);
+	free_real_2d_array(b);
+	free_real_2d_array(bt);
 }
 
 /*
@@ -82,8 +82,8 @@ TEST(Transpose, Looped)
 	
 		}
 	}
-	free(b);
-	free(bt);
+	free_real_2d_array(b);
+	free_real_2d_array(bt);
 
 }
 

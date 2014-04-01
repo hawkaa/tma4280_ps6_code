@@ -56,12 +56,8 @@ main(int argc, char** argv)
 
 	/* get rank variable */
 	int rank;
-	#ifdef HAVE_MPI
 	MPI_Init(&argc, &argv);
 	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-	#else
-	rank = 0;
-	#endif
 
 
 
@@ -83,9 +79,7 @@ main(int argc, char** argv)
 	}
 
 	/* finalize mpi */
-	#ifdef HAVE_MPI
 	MPI_Finalize();
-	#endif
 	
 	exit(0);
 }
