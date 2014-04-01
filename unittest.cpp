@@ -139,8 +139,8 @@ TEST(transpose, HardCoded)
 	ASSERT_FLOAT_EQ(bt[1][0], 2.0);
 	ASSERT_FLOAT_EQ(bt[1][1], 4.0);
 
-	free(b);
-	free(bt);
+	free_real_2d_array(b);
+	free_real_2d_array(bt);
 }
 
 TEST(transpose, Looped)
@@ -172,8 +172,8 @@ TEST(transpose, Looped)
 		}
 	
 	}
-	free(b);
-	free(bt);
+	free_real_2d_array(b);
+	free_real_2d_array(bt);
 
 }
 
@@ -218,7 +218,7 @@ TEST(create_send_buffer, test1)
 	ASSERT_FLOAT_EQ(13, send_buf[12]);
 	ASSERT_FLOAT_EQ(14, send_buf[13]);
 
-	free(b);
+	free_real_2d_array(b);
 	free(s_count);
 	free(s_displ);
 	free(send_buf);
@@ -381,7 +381,7 @@ TEST_F(Matrix3x3, create_part_matrix)
 	ASSERT_FLOAT_EQ(1, b0[0][0]);
 	ASSERT_FLOAT_EQ(2, b0[0][1]);
 	ASSERT_FLOAT_EQ(3, b0[0][2]);
-	free(b0);
+	free_real_2d_array(b0);
 
 	Real **b1 = create_part_matrix(b, 3, 1, sizes);
 	ASSERT_FLOAT_EQ(4, b1[0][0]);
@@ -390,7 +390,7 @@ TEST_F(Matrix3x3, create_part_matrix)
 	ASSERT_FLOAT_EQ(7, b1[1][0]);
 	ASSERT_FLOAT_EQ(8, b1[1][1]);
 	ASSERT_FLOAT_EQ(9, b1[1][2]);
-	free(b1);
+	free_real_2d_array(b1);
 
 
 }

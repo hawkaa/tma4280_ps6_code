@@ -58,12 +58,8 @@ main(int argc, char** argv)
 
 	/* get rank variable */
 	int rank;
-	#ifdef HAVE_MPI
 	MPI_Init(&argc, &argv);
 	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-	#else
-	rank = 0;
-	#endif
 
 
 	Real *wtimes = (Real*)malloc(sizeof(Real) * num_runs);
@@ -78,18 +74,18 @@ main(int argc, char** argv)
 	for (i = n_min; i <= n_max; ++i) {
 		j = pow(2, i);
 		for (p = 0; p < num_runs; ++p) {
-			poisson_parallel(j, &wtimes[p], *f, *u);
+			poisson_parallel(j, &wtimes[p], *f, NULL);
 		}
 		if (rank == 0) {
-			/* only rank 0 have valid result, and will print to file */
-			printf("%i\t%.25e\n", j, get_average(wtimes, num_runs, OUTLIERS_CUTOFF));
+			/* only rank 0 have valid result, and will print to 
+			file */
+			printf("%i\t%.25e\n", j, get_average(wtimes, num_runs,
+			OUTLIERS_CUTOFF));
 		}
 	}
 
 	/* finalize mpi */
-	#ifdef HAVE_MPI
 	MPI_Finalize();
-	#endif
 	
 	exit(0);
 }
