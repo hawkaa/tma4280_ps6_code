@@ -64,6 +64,8 @@ main(int argc, char** argv)
  		printf("Average Time: %.25e\n", get_average(wtimes, num_of_runs,
 						OUTLIERS_CUTOFF));		
 	}
+
+	MPI_Finalize();
 	
 	return 0;
 
